@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 17e: an end-to-end test harness that survives a migration](2026-07-phase-17e-e2e-testing.md) | Phase 17e (e2e testing) |
 | 2026-07 | [Where the project stands](2026-07-baseline.md) | Baseline (through phase 17) |
 
 Entries for earlier phases may be backfilled selectively; entries for new phases land as they ship.

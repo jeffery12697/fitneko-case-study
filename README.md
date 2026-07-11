@@ -37,11 +37,11 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL · Redis · LINE Messaging API · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store)
 
-**Scale of the codebase:** ~10k LOC of application Go, ~11.6k LOC of tests across 40 test files, 12 SQL migrations, 240+ commits.
+**Scale of the codebase:** ~10k LOC of application Go plus a ~900-LOC end-to-end test harness, ~12k LOC of tests across 48 test files, 12 SQL migrations, 260+ commits.
 
 ## Deep dives
 
-The interesting engineering lives in four decisions:
+The interesting engineering lives in five decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -49,11 +49,12 @@ The interesting engineering lives in four decisions:
 | 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | Knowing when *not* to use an LLM. 11 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
 | 3 | [One interface, two LLM providers](deep-dives/03-llm-provider-abstraction.md) | OpenAI structured outputs and Anthropic tool-use forcing behave differently; unifying them shaped the whole parsing layer. |
 | 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world — TTL-bounded pending questions that degrade gracefully. |
+| 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | A suite built to run unchanged before and after a serverless migration — so it guards the move instead of being rewritten by it. |
 
 ## Engineering practices
 
 - **Spec-first phases.** Every feature phase starts with a written spec (numbered requirements, explicit error cases) before any code. Development history is a sequence of ~19 phases so far.
-- **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order.
+- **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order. As of phase 17e this is a one-command harness with a deterministic mock tier and an LLM-judged real tier, built behind a driver seam so the same scenarios run unchanged across the upcoming serverless migration.
 - **Migrations as code.** Versioned up/down SQL pairs, applied idempotently and tracked in a `schema_migrations` table.
 - **Graceful degradation as a default.** LLM calls retry with exponential backoff and honor `Retry-After`; clarification-store failures degrade to a re-prompt instead of an error; unreadable images get a safe reply instead of a bogus log.
 
