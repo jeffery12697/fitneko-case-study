@@ -37,7 +37,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL · Redis · LINE Messaging API · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store)
 
-**Scale of the codebase:** ~10k LOC of application Go, ~11.6k LOC of tests across 40 test files, 26 SQL migrations, 360+ commits.
+**Scale of the codebase:** ~10k LOC of application Go, ~11.6k LOC of tests across 40 test files, 12 SQL migrations, 240+ commits.
 
 ## Deep dives
 
