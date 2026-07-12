@@ -6,6 +6,9 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 19b: guided strength-training sessions](2026-07-phase-19b-strength-training.md) | Phase 19b (strength training) |
+| 2026-07 | [Phase 19a: workout logging and net intake](2026-07-phase-19a-workout-logging.md) | Phase 19a (workout logging) |
+| 2026-07 | [Phase 18: TDEE-assisted goals and weight tracking](2026-07-phase-18-tdee-weight-tracking.md) | Phase 18 (goals & weight) |
 | 2026-07 | [Phase 17e: an end-to-end test harness that survives a migration](2026-07-phase-17e-e2e-testing.md) | Phase 17e (e2e testing) |
 | 2026-07 | [Where the project stands](2026-07-baseline.md) | Baseline (through phase 17) |
 
