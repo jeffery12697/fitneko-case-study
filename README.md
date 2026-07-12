@@ -17,7 +17,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Conversational corrections** — `把早餐的蛋改成兩顆`, `delete the latte from lunch`, targeted at history, not just the latest entry. Chinese hits the deterministic rule layer; English routes through the LLM parser to the same intents, replying in kind.
 - **TDEE-assisted goals** — `幫我算目標 我175cm 70kg 30歲男 久坐 想減脂` computes Mifflin-St Jeor targets, asks for missing fields one at a time, and confirms before writing.
 - **Workout logging with net intake** — `跑步30分鐘` gets a MET-based burn estimate; the daily summary shows intake minus burn (while target comparison deliberately stays gross — the TDEE targets already price in activity).
-- **Guided strength sessions** — a seeded training plan drives "今天練什麼" menus with last session's numbers and double-progression suggestions; mid-workout, a set is logged by typing just `10x70`.
+- **Guided strength sessions** — a seeded training plan drives `今天練什麼` / `what should I train today` menus with last session's numbers and double-progression suggestions; mid-workout, a set is logged by typing just `10x70`, and `next` / `skip` / `end` steer the session in either language.
 - **Personal saved foods, weight tracking, daily summaries, in-chat help.**
 
 ## System at a glance
@@ -41,7 +41,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store) · AWS Lambda + SQS behind API Gateway, provisioned with Terraform (prod + disposable dev workspaces) · GitHub Actions CI
 
-**Scale of the codebase:** ~15k LOC of application Go (including a ~1.2k-LOC end-to-end test harness), ~16k LOC of tests across 63 test files, 15 SQL migrations, 410+ commits.
+**Scale of the codebase:** ~15k LOC of application Go (including a ~1.2k-LOC end-to-end test harness), ~16.6k LOC of tests across 64 test files, 15 SQL migrations, 415+ commits.
 
 ## Deep dives
 

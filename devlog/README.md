@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 19c: the feature the English composer promised but the parser couldn't hear](2026-07-phase-19c-strength-bilingual.md) | Phase 19c (bilingual strength flows) |
 | 2026-07 | [Going live: CI, a blocked front door, and a same-day teardown](2026-07-going-live.md) | Delivery: CI, API Gateway, dev env, backups |
 | 2026-07 | [Phase 17f: taking my own advice and deleting the Fargate worker](2026-07-phase-17f-lambda-worker.md) | Phase 17f (worker → SQS Lambda) |
 | 2026-07 | [Phase 17d: optimizing away from the textbook AWS answer](2026-07-phase-17d-neon-fargate.md) | Phase 17d (Neon + Fargate) |
