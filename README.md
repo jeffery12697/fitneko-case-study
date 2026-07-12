@@ -37,9 +37,9 @@ flowchart TD
     VIS --> SVC
 ```
 
-**Stack:** Go · PostgreSQL · Redis · LINE Messaging API · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store)
+**Stack:** Go · PostgreSQL / Neon · LINE Messaging API · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store) · AWS Lambda + SQS, provisioned with Terraform (serverless deploy)
 
-**Scale of the codebase:** ~15k LOC of application Go (including a ~1.2k-LOC end-to-end test harness), ~16k LOC of tests across 60 test files, 15 SQL migrations, 360+ commits.
+**Scale of the codebase:** ~15k LOC of application Go (including a ~1.2k-LOC end-to-end test harness), ~16k LOC of tests across 61 test files, 15 SQL migrations, 390+ commits.
 
 ## Deep dives
 
@@ -56,7 +56,7 @@ The interesting engineering lives in five decisions:
 ## Engineering practices
 
 - **Spec-first phases.** Every feature phase starts with a written spec (numbered requirements, explicit error cases) before any code — since phase 18, always including a semantic-boundary matrix with positive *and* negative test cases for every ambiguity ruling. Development history is a sequence of ~21 phases so far.
-- **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order. As of phase 17e this is a one-command harness with a deterministic mock tier and an LLM-judged real tier, built behind a driver seam so the same scenarios run unchanged across the upcoming serverless migration.
+- **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order. As of phase 17e this is a one-command harness with a deterministic mock tier and an LLM-judged real tier, built behind a driver seam so the same scenarios ran unchanged across the serverless migration (phases 17b–17f: the canonical Lambda + RDS stack, then a cost-optimized rewrite to Neon, then the worker moved off Fargate back to an SQS-triggered Lambda) — guarding the move rather than being rewritten by it.
 - **Migrations as code.** Versioned up/down SQL pairs, applied idempotently and tracked in a `schema_migrations` table.
 - **Graceful degradation as a default.** LLM calls retry with exponential backoff and honor `Retry-After`; clarification-store failures degrade to a re-prompt instead of an error; unreadable images get a safe reply instead of a bogus log.
 
