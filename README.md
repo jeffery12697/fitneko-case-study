@@ -1,6 +1,6 @@
 # FitNeko — Engineering Case Study
 
-FitNeko is a LINE-first AI diet logging backend I'm building solo, in Go. Users log meals by chatting naturally — text or photos, in Chinese, English, or mixed — and get calorie/macro tracking with personal targets, all inside LINE.
+FitNeko is a LINE-first AI fitness backend I'm building solo, in Go. Users chat naturally — text or photos, in Chinese, English, or mixed — to log meals and workouts, track weight, and run guided strength sessions, with calorie/macro tracking against personal TDEE-based targets, all inside LINE.
 
 > 🚧 **This is a living case study of an actively developed product.** The product source is private; this repo documents the architecture, the engineering decisions, and what I learned building it. Updated at the end of each development phase — see the [devlog](devlog/).
 
@@ -24,9 +24,11 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 ```mermaid
 flowchart TD
-    LINE[LINE webhook] --> WH[Webhook handler<br/><i>validate, enqueue, HTTP 200 in ms</i>]
-    WH --> DB[(PostgreSQL<br/>intake_jobs)]
-    DB --> W[Background worker<br/><i>SELECT FOR UPDATE SKIP LOCKED</i>]
+    LINE[LINE webhook] --> WH[Webhook handler<br/><i>validate, persist + enqueue, HTTP 200 in ms</i>]
+    WH --> DB[(PostgreSQL<br/>intake_jobs — idempotent by message id)]
+    WH --> Q[SQS queue]
+    Q --> W[Background worker<br/><i>claims the job row by id<br/>SKIP LOCKED poll in monolith mode</i>]
+    W --> DB
     W --> RP[Deterministic rule pipeline<br/><i>13 intent rules, fixed order</i>]
     RP -->|no match| LLM[LLM parser<br/><i>OpenAI / Anthropic behind one interface</i>]
     RP -->|match| SVC[Diet service]
