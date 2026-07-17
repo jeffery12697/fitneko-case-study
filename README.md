@@ -19,6 +19,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Workout logging with net intake** — `跑步30分鐘` gets a MET-based burn estimate; the daily summary shows intake minus burn (while target comparison deliberately stays gross — the TDEE targets already price in activity).
 - **Guided strength sessions** — a seeded training plan drives `今天練什麼` / `what should I train today` menus with last session's numbers and double-progression suggestions; mid-workout, a set is logged by typing just `10x70`, and `next` / `skip` / `end` steer the session in either language.
 - **Taiwan food catalog** — 2,500+ items of official-grade nutrition (government dataset + convenience-store disclosures, every row carrying its source URL and capture date). An exact name/alias hit beats the LLM estimate — for meal photos, the vision model's gram-weight estimate × per-100g density replaces pixel guessing — and unknown foods still fall through to estimation.
+- **Hand-shaken drinks, decomposed** — `可不可熟成紅茶一分糖少冰加珍珠` is parsed into brand, base, sugar level, ice, and toppings, then costed by a deterministic engine: an unsweetened base plus a sugar component scaled by the ordered sweetness (全糖 / 半糖 / 一分糖 …) plus toppings. Sugar level actually changes the number, sugar grams become a first-class field, and any uncurated brand or topping falls through to the LLM estimate.
 - **A MINI app for the review-heavy tasks** — a LIFF web app on the same LINE identity (no second login): dashboard with calorie ring and macro bars, paged food/workout history with inline edits, a three-level training-plan editor with drag reordering, trend charts, and settings. Bilingual, mock-backed offline dev mode, and browser e2e against the real stack.
 - **Personal saved foods, weight tracking, daily summaries, in-chat help.**
 
@@ -35,7 +36,7 @@ flowchart TD
     RP -->|no match| LLM[LLM parser<br/><i>OpenAI / Anthropic behind one interface</i>]
     RP -->|match| SVC[Diet service]
     LLM --> SVC
-    SVC --> CAT[(Taiwan food catalog<br/><i>seed files in git, projected to rows<br/>personal → catalog → LLM estimator</i>)]
+    SVC --> CAT[(Taiwan food + drink catalog<br/><i>seed files in git, projected to rows<br/>personal → beverage engine → catalog → LLM estimator</i>)]
     SVC --> PG[(PostgreSQL<br/>diet logs · profiles · estimate cache)]
     SVC --> REPLY[LINE reply API<br/><i>stored reply token, 55s window</i>]
     W -.->|image jobs| VIS[Vision analysis<br/><i>meal photo vs. nutrition label routing</i>]
@@ -46,7 +47,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite (MINI app) · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store) · AWS Lambda + SQS behind API Gateway, provisioned with Terraform (prod + disposable dev workspaces) · GitHub Actions CI/CD (OIDC, zero stored cloud keys) · Playwright browser e2e
 
-**Scale of the codebase:** ~19.8k LOC of application Go (including a ~1.9k-LOC end-to-end test harness) plus ~5.6k LOC of TypeScript/React, ~19.7k LOC of Go tests across 85 test files, 20 SQL migrations, 500+ commits.
+**Scale of the codebase:** ~21.1k LOC of application Go (including a ~1.9k-LOC end-to-end test harness) plus ~5.6k LOC of TypeScript/React, ~21.2k LOC of Go tests across 98 test files, 25 SQL migrations, 550+ commits.
 
 ## Deep dives
 
@@ -63,7 +64,7 @@ The interesting engineering lives in six decisions:
 
 ## Engineering practices
 
-- **Spec-first phases.** Every feature phase starts with a written spec (numbered requirements, explicit error cases) before any code — since phase 18, always including a semantic-boundary matrix with positive *and* negative test cases for every ambiguity ruling. Development history is a sequence of ~23 phases so far.
+- **Spec-first phases.** Every feature phase starts with a written spec (numbered requirements, explicit error cases) before any code — since phase 18, always including a semantic-boundary matrix with positive *and* negative test cases for every ambiguity ruling. Development history is a sequence of ~24 phases so far.
 - **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order. As of phase 17e this is a one-command harness with a deterministic mock tier and an LLM-judged real tier, built behind a driver seam so the same scenarios ran unchanged across the serverless migration (phases 17b–17f: the canonical Lambda + RDS stack, then a cost-optimized rewrite to Neon, then the worker moved off Fargate back to an SQS-triggered Lambda) — guarding the move rather than being rewritten by it.
 - **CI on every push.** GitHub Actions runs vet, unit tests against a real Postgres, the deterministic mock-tier e2e suite, a smoke build of every Lambda artifact, the frontend's unit tests and typed build, and a Playwright browser e2e job that drives Chromium through the real Vite app into the real API and database with a fresh user per run — no real credentials, no LLM tokens, ~3 minutes wall-clock across parallel jobs. The database-backup restore path is part of the unit suite, so "backups are restorable" is re-proven on every push.
 - **Migrations as code.** Versioned up/down SQL pairs, applied idempotently and tracked in a `schema_migrations` table; the pipeline runs them after every deploy via a dedicated `migrate` command.

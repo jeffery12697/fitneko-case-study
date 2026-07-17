@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 20c: the drink that isn't one number](2026-07-phase-20c-bubble-tea-catalog.md) | Phase 20c (hand-shaken drink catalog) |
 | 2026-07 | [Phase 22: a second front door — the MINI app for what chat is bad at](2026-07-phase-22-liff-mini-app.md) | Phase 22 (LIFF MINI app) |
 | 2026-07 | [Phase 20b: the Taiwan food catalog](2026-07-phase-20b-taiwan-food-catalog.md) | Phase 20b (Taiwan food catalog) |
 | 2026-07 | [CD stage 2: deploys with zero stored keys, and a review gate built from a paywall](2026-07-cd-stage-2-deploy-pipeline.md) | Delivery: OIDC deploy pipeline |
