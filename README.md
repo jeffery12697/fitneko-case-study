@@ -1,8 +1,8 @@
 # FitNeko — Engineering Case Study
 
-FitNeko is a LINE-first AI fitness product I'm building solo — a Go backend and, since phase 22, a React MINI app that opens inside the chat. Users chat naturally — text or photos, in Chinese, English, or mixed — to log meals and workouts, track weight, and run guided strength sessions, with calorie/macro tracking against personal TDEE-based targets; the review-and-edit surfaces chat is bad at (history browsing, plan editing, trends, settings) live in the LIFF app, all inside LINE.
+FitNeko is a LINE-first AI fitness coach, built solo: chat naturally — Chinese, English, or photos — to log meals and workouts; a React MINI app inside LINE handles the review-heavy rest.
 
-> 🚧 **This is a living case study of an actively developed product.** The product source is private; this repo documents the architecture, the engineering decisions, and what I learned building it. Updated at the end of each development phase — see the [devlog](devlog/).
+> 🚧 **Living case study of an actively developed product.** The source is private; this repo documents the architecture and the decisions. Details live in the [devlog](devlog/) and [deep dives](#deep-dives).
 
 ```
 User: 早餐吃了一個鮭魚御飯團跟大杯拿鐵
@@ -12,17 +12,16 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 ## What it does
 
-- **Natural-language food logging** — free-form text in zh-TW, English, or mixed, parsed into structured logs (calories, protein, carbs, fat).
-- **Photo intake** — meal photos get portion estimation; nutrition-label photos get per-serving OCR, then the bot asks *"how much did you actually eat?"* (`1份`, `30g`, `半包`, `2 servings`) before logging.
-- **Conversational corrections** — `把早餐的蛋改成兩顆`, `delete the latte from lunch`, targeted at history, not just the latest entry. Chinese hits the deterministic rule layer; English routes through the LLM parser to the same intents, replying in kind.
-- **TDEE-assisted goals** — `幫我算目標 我175cm 70kg 30歲男 久坐 想減脂` computes Mifflin-St Jeor targets, asks for missing fields one at a time, and confirms before writing.
-- **Workout logging with net intake** — `跑步30分鐘` gets a MET-based burn estimate; the daily summary shows intake minus burn (while target comparison deliberately stays gross — the TDEE targets already price in activity).
-- **Guided strength sessions** — a seeded training plan drives `今天練什麼` / `what should I train today` menus with last session's numbers and double-progression suggestions; mid-workout, a set is logged by typing just `10x70`, and `next` / `skip` / `end` steer the session in either language.
-- **Taiwan food catalog** — 2,500+ items of official-grade nutrition (government dataset + convenience-store disclosures, every row carrying its source URL and capture date). An exact name/alias hit beats the LLM estimate — for meal photos, the vision model's gram-weight estimate × per-100g density replaces pixel guessing — and unknown foods still fall through to estimation.
-- **Hand-shaken drinks, decomposed** — `可不可熟成紅茶一分糖少冰加珍珠` is parsed into brand, base, sugar level, ice, and toppings, then costed by a deterministic engine: an unsweetened base plus a sugar component scaled by the ordered sweetness (全糖 / 半糖 / 一分糖 …) plus toppings. Sugar level actually changes the number, sugar grams become a first-class field, and any uncurated brand or topping falls through to the LLM estimate.
-- **A MINI app for the review-heavy tasks** — a LIFF web app on the same LINE identity (no second login): dashboard with calorie ring and macro bars, paged food/workout history with inline edits, a three-level training-plan editor with drag reordering, trend charts, and settings. Bilingual (boot language cached locally), adjustable font size, sticker-flat design system shared with the chat-side rich menu, animated mascot loading states, mock-backed offline dev mode, and browser e2e against the real stack.
-- **Cost guardrails** — image vision draws from a small daily free credit allowance (an in-chat confirm before any permanent credits are spent, refunds on failure, every movement in an audit ledger); a separate daily text counter handles spam without rationing normal chat.
-- **Personal saved foods, weight tracking, daily summaries, in-chat help.**
+- **Natural-language logging** — free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
+- **Photo intake** — meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
+- **Conversational corrections** — `把早餐的蛋改成兩顆` / `delete the latte from lunch`, targeted at any past entry.
+- **TDEE-assisted goals** — one message computes personal targets; missing fields are asked one at a time, then confirmed.
+- **Workouts & guided strength sessions** — MET-based burn estimates; mid-workout, a set is logged by typing `10x70`.
+- **Taiwan food catalog** — 2,500+ items with source-tracked official nutrition; exact hits beat LLM guesses, unknowns still estimate.
+- **Hand-shaken drinks, decomposed** — brand × base × sugar level × toppings × cup size, costed by a deterministic engine; sugar is a first-class field.
+- **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
+- **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
+- Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
 
 ## System at a glance
 
@@ -47,9 +46,9 @@ flowchart TD
     API --> PG
 ```
 
-**Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite (MINI app) · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store) · AWS Lambda + SQS behind API Gateway, provisioned with Terraform (prod + disposable dev workspaces) · GitHub Actions CI/CD (OIDC, zero stored cloud keys) · Playwright browser e2e
+**Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale of the codebase:** ~21.6k LOC of application Go (including a ~1.9k-LOC end-to-end test harness) plus ~6.1k LOC of TypeScript/React, ~21.4k LOC of Go tests across 100 test files, 27 SQL migrations, 600 commits.
+**Scale:** ~21.6k LOC application Go · ~6.1k LOC TypeScript/React · ~21.4k LOC Go tests (100 files) · 27 migrations · 600 commits
 
 ## Deep dives
 
@@ -57,29 +56,29 @@ The interesting engineering lives in six decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
-| 1 | [Async intake: acknowledge fast, reply later](deep-dives/01-async-intake-pipeline.md) | LINE webhooks can't wait for an LLM. Enqueue, return 200, and treat the reply token as a perishable resource. |
-| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | Knowing when *not* to use an LLM. 13 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
-| 3 | [One interface, two LLM providers](deep-dives/03-llm-provider-abstraction.md) | OpenAI structured outputs and Anthropic tool-use forcing behave differently; unifying them shaped the whole parsing layer. |
-| 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world — TTL-bounded pending questions that degrade gracefully. |
-| 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | A suite built to run unchanged before and after a serverless migration — so it guards the move instead of being rewritten by it. |
-| 6 | [History is fact, a plan is a template](deep-dives/06-history-vs-template.md) | The plan editor's autosave was silently erasing training history. The fix wasn't a cleverer foreign key — it was classifying every row as fact or template. |
+| 1 | [Async intake: acknowledge fast, reply later](deep-dives/01-async-intake-pipeline.md) | LINE webhooks can't wait for an LLM — enqueue, return 200, treat the reply token as perishable. |
+| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | 13 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
+| 3 | [One interface, two LLM providers](deep-dives/03-llm-provider-abstraction.md) | OpenAI and Anthropic force structure differently; unifying them shaped the parsing layer. |
+| 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world, TTL-bounded and gracefully degrading. |
+| 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | One e2e suite ran unchanged before and after the serverless migration — guarding it, not rewritten by it. |
+| 6 | [History is fact, a plan is a template](deep-dives/06-history-vs-template.md) | An autosave was silently erasing training history; the fix was classifying every row as fact or template. |
 
 ## Engineering practices
 
-- **Spec-first phases.** Every feature phase starts with a written spec (numbered requirements, explicit error cases) before any code — since phase 18, always including a semantic-boundary matrix with positive *and* negative test cases for every ambiguity ruling. Development history is a sequence of ~24 phases so far.
-- **TDD throughout.** Tests are written against behavior: unit tests for parser rules, DB-backed integration tests gated on `TEST_DATABASE_URL`, and end-to-end worker tests that assert on *results and persisted data* — reply text sent, diet log rows created — never on internal state like cache hits or rule order. As of phase 17e this is a one-command harness with a deterministic mock tier and an LLM-judged real tier, built behind a driver seam so the same scenarios ran unchanged across the serverless migration (phases 17b–17f: the canonical Lambda + RDS stack, then a cost-optimized rewrite to Neon, then the worker moved off Fargate back to an SQS-triggered Lambda) — guarding the move rather than being rewritten by it.
-- **CI on every push.** GitHub Actions runs vet, unit tests against a real Postgres, the deterministic mock-tier e2e suite, a smoke build of every Lambda artifact, the frontend's unit tests and typed build, and a Playwright browser e2e job that drives Chromium through the real Vite app into the real API and database with a fresh user per run — no real credentials, no LLM tokens, ~3 minutes wall-clock across parallel jobs. The database-backup restore path is part of the unit suite, so "backups are restorable" is re-proven on every push.
-- **Migrations as code.** Versioned up/down SQL pairs, applied idempotently and tracked in a `schema_migrations` table; the pipeline runs them after every deploy via a dedicated `migrate` command.
-- **CD with zero stored keys.** Every merge to `main` auto-deploys an always-on dev environment against real AWS (apply, migrate, smoke test) via GitHub OIDC — no long-lived cloud credentials anywhere. Production is a two-step dispatch: publish the plan, read it, then apply that exact saved plan; every prod deploy leaves a `prod-<timestamp>` tag.
-- **Graceful degradation as a default.** LLM calls retry with exponential backoff and honor `Retry-After`; clarification-store failures degrade to a re-prompt instead of an error; unreadable images get a safe reply instead of a bogus log.
+- **Spec-first phases** — every phase starts from a written spec with numbered requirements and explicit error cases (~24 phases so far).
+- **TDD against behavior** — tests assert on replies sent and rows written, never internals; a one-command e2e harness (deterministic mock tier + LLM-judged real tier) survived the serverless migration unchanged.
+- **CI on every push** — Go + web suites, mock-tier e2e, Lambda smoke builds, Playwright browser e2e, and a backup-restore proof; ~3 minutes, zero real credentials.
+- **CD with zero stored keys** — every merge auto-deploys a dev environment via GitHub OIDC; prod is a two-step plan-then-apply, every deploy tagged.
+- **Migrations as code** — versioned up/down SQL pairs, applied idempotently by the pipeline.
+- **Graceful degradation by default** — LLM retries with backoff, clarification failures re-prompt, unreadable images never fabricate a log.
 
 ## Devlog
 
-Ongoing, one entry per completed phase: **[devlog/](devlog/)**
+One entry per completed phase — problem, decisions, honest hindsight: **[devlog/](devlog/)**
 
 ## What this repo is not
 
-This is not the product source and it is not runnable. Prompt designs, full intent-rule conditions, and nutrition estimation rules are deliberately not included. Code excerpts here are architecture-level (interfaces, orchestration logic) and lightly trimmed for readability.
+Not the product source, not runnable. Prompt designs, full intent-rule conditions, and nutrition estimation rules stay private; code excerpts are architecture-level.
 
 ---
 
