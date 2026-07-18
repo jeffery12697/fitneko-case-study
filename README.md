@@ -20,7 +20,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Guided strength sessions** — a seeded training plan drives `今天練什麼` / `what should I train today` menus with last session's numbers and double-progression suggestions; mid-workout, a set is logged by typing just `10x70`, and `next` / `skip` / `end` steer the session in either language.
 - **Taiwan food catalog** — 2,500+ items of official-grade nutrition (government dataset + convenience-store disclosures, every row carrying its source URL and capture date). An exact name/alias hit beats the LLM estimate — for meal photos, the vision model's gram-weight estimate × per-100g density replaces pixel guessing — and unknown foods still fall through to estimation.
 - **Hand-shaken drinks, decomposed** — `可不可熟成紅茶一分糖少冰加珍珠` is parsed into brand, base, sugar level, ice, and toppings, then costed by a deterministic engine: an unsweetened base plus a sugar component scaled by the ordered sweetness (全糖 / 半糖 / 一分糖 …) plus toppings. Sugar level actually changes the number, sugar grams become a first-class field, and any uncurated brand or topping falls through to the LLM estimate.
-- **A MINI app for the review-heavy tasks** — a LIFF web app on the same LINE identity (no second login): dashboard with calorie ring and macro bars, paged food/workout history with inline edits, a three-level training-plan editor with drag reordering, trend charts, and settings. Bilingual, mock-backed offline dev mode, and browser e2e against the real stack.
+- **A MINI app for the review-heavy tasks** — a LIFF web app on the same LINE identity (no second login): dashboard with calorie ring and macro bars, paged food/workout history with inline edits, a three-level training-plan editor with drag reordering, trend charts, and settings. Bilingual (boot language cached locally), adjustable font size, sticker-flat design system shared with the chat-side rich menu, animated mascot loading states, mock-backed offline dev mode, and browser e2e against the real stack.
+- **Cost guardrails** — image vision draws from a small daily free credit allowance (an in-chat confirm before any permanent credits are spent, refunds on failure, every movement in an audit ledger); a separate daily text counter handles spam without rationing normal chat.
 - **Personal saved foods, weight tracking, daily summaries, in-chat help.**
 
 ## System at a glance
@@ -32,7 +33,8 @@ flowchart TD
     WH --> Q[SQS queue]
     Q --> W[Background worker<br/><i>claims the job row by id<br/>SKIP LOCKED poll in monolith mode</i>]
     W --> DB
-    W --> RP[Deterministic rule pipeline<br/><i>13 intent rules, fixed order</i>]
+    W --> CRED[Credit guard<br/><i>daily free + permanent, ledgered<br/>confirm-before-spend on vision</i>]
+    CRED --> RP[Deterministic rule pipeline<br/><i>13 intent rules, fixed order</i>]
     RP -->|no match| LLM[LLM parser<br/><i>OpenAI / Anthropic behind one interface</i>]
     RP -->|match| SVC[Diet service]
     LLM --> SVC
@@ -47,7 +49,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite (MINI app) · OpenAI Responses API · Anthropic Messages API · Docker Compose (local) · DynamoDB (serverless clarification store) · AWS Lambda + SQS behind API Gateway, provisioned with Terraform (prod + disposable dev workspaces) · GitHub Actions CI/CD (OIDC, zero stored cloud keys) · Playwright browser e2e
 
-**Scale of the codebase:** ~21.1k LOC of application Go (including a ~1.9k-LOC end-to-end test harness) plus ~5.6k LOC of TypeScript/React, ~21.2k LOC of Go tests across 98 test files, 25 SQL migrations, 550+ commits.
+**Scale of the codebase:** ~21.6k LOC of application Go (including a ~1.9k-LOC end-to-end test harness) plus ~6.1k LOC of TypeScript/React, ~21.4k LOC of Go tests across 100 test files, 27 SQL migrations, 600 commits.
 
 ## Deep dives
 
