@@ -26,25 +26,19 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 ## System at a glance
 
 ```mermaid
-flowchart TD
-    LINE[LINE webhook] --> WH[Webhook handler<br/><i>validate, persist + enqueue, HTTP 200 in ms</i>]
-    WH --> DB[(PostgreSQL<br/>intake_jobs — idempotent by message id)]
-    WH --> Q[SQS queue]
-    Q --> W[Background worker<br/><i>claims the job row by id<br/>SKIP LOCKED poll in monolith mode</i>]
-    W --> DB
-    W --> CRED[Credit guard<br/><i>daily free + permanent, ledgered<br/>confirm-before-spend on vision</i>]
-    CRED --> RP[Deterministic rule pipeline<br/><i>13 intent rules, fixed order</i>]
-    RP -->|no match| LLM[LLM parser<br/><i>OpenAI / Anthropic behind one interface</i>]
+flowchart LR
+    LINE[LINE webhook] --> WH[Ack in ms<br/>persist + enqueue] --> Q[SQS] --> W[Worker]
+    W --> RP{13 intent rules,<br/>fixed order}
     RP -->|match| SVC[Diet service]
-    LLM --> SVC
-    SVC --> CAT[(Taiwan food + drink catalog<br/><i>seed files in git, projected to rows<br/>personal → beverage engine → catalog → LLM estimator</i>)]
-    SVC --> PG[(PostgreSQL<br/>diet logs · profiles · estimate cache)]
-    SVC --> REPLY[LINE reply API<br/><i>stored reply token, 55s window</i>]
-    W -.->|image jobs| VIS[Vision analysis<br/><i>meal photo vs. nutrition label routing</i>]
-    VIS --> SVC
-    LIFF[LIFF MINI app<br/><i>React · opens inside LINE</i>] --> API[LIFF API Lambda<br/><i>ID-token auth via LINE JWKS</i>]
-    API --> PG
+    RP -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
+    W -.->|photos| VIS[Vision] -.-> SVC
+    SVC --> CAT[(Taiwan food +<br/>drink catalog)]
+    SVC --> PG[(PostgreSQL)]
+    SVC --> REPLY[LINE reply]
+    LIFF[LIFF MINI app<br/>React, inside LINE] --> API[REST Lambda] --> PG
 ```
+
+<sub>Catalog beats estimator; unknowns still estimate. A credit guard meters the vision path. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
