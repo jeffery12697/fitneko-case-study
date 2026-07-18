@@ -26,7 +26,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 ## System at a glance
 
 ```mermaid
-flowchart LR
+%%{init: {"themeVariables": {"fontSize": "18px"}}}%%
+flowchart TD
     LINE[LINE webhook] --> WH[Ack in ms<br/>persist + enqueue] --> Q[SQS] --> W[Worker]
     W --> RP{13 intent rules,<br/>fixed order}
     RP -->|match| SVC[Diet service]
