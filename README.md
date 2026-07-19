@@ -14,6 +14,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 - **Natural-language logging** — free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
 - **Photo intake** — meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
+- **Voice logging** — send a LINE voice message and it's transcribed (OpenAI Whisper), then flows through the exact same parsing as typed text; over-long clips are declined up front.
 - **Conversational corrections** — `把早餐的蛋改成兩顆` / `delete the latte from lunch`, targeted at any past entry.
 - **TDEE-assisted goals** — one message computes personal targets; missing fields are asked one at a time, then confirmed.
 - **Workouts & guided strength sessions** — MET-based burn estimates; mid-workout, a set is logged by typing `10x70`.
@@ -33,6 +34,7 @@ flowchart TD
     RP -->|match| SVC[Diet service]
     RP -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
     W -.->|photos| VIS[Vision] -.-> SVC
+    W -.->|voice| STT[Transcribe<br/>Whisper] -.-> RP
     SVC --> CAT[(Taiwan food +<br/>drink catalog)]
     SVC --> PG[(PostgreSQL)]
     SVC --> REPLY[LINE reply]
@@ -43,7 +45,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~21.6k LOC application Go · ~6.1k LOC TypeScript/React · ~21.4k LOC Go tests (100 files) · 27 migrations · 600 commits
+**Scale:** ~22.7k LOC application Go · ~6.2k LOC TypeScript/React · ~23.4k LOC Go tests (109 files) · 27 migrations · 650 commits
 
 ## Deep dives
 

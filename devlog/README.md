@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 19c: voice input, and the queue that never got the message](2026-07-phase-19c-voice-messages.md) | Phase 19c (voice messages) |
 | 2026-07 | [Polish: the week the MINI app became a product](2026-07-liff-polish-neko-branding.md) | Delivery: LIFF polish & mascot branding |
 | 2026-07 | [Phase 20: a budget for the LLM, before the bill writes one for me](2026-07-phase-20-credit-system.md) | Phase 20 (credit system) |
 | 2026-07 | [Phase 20c: the drink that isn't one number](2026-07-phase-20c-bubble-tea-catalog.md) | Phase 20c (hand-shaken drink catalog) |

@@ -1,0 +1,20 @@
+# 2026-07 — Phase 19c: voice input, and the queue that never got the message
+
+*Voice logging shipped green — client written, worker wired, tests passing. Then in dev every voice note spun forever and never got a reply. The transcription was fine. The queue simply never heard about the job.*
+
+## The problem
+
+Typing a meal is friction when your hands are full or you're walking. LINE already delivers voice messages, so the ask was small on the surface: let someone speak "早餐吃了一個鮭魚御飯團跟大杯拿鐵" and get back the same structured calorie + macro log a typed message would produce. The interesting part isn't the speech-to-text — it's fitting an extra network round-trip into a pipeline that already runs on a deadline.
+
+## Decisions
+
+**Transcription is a pre-stage, not a parallel pipeline.** A voice message becomes a new `line_audio` job type; the worker downloads the audio, sends it to transcription, writes the returned text back onto the job, and then falls through to the exact same path a typed message takes — the ordered intent rules, then the LLM parser, then the estimator. Nothing downstream knows the text came from speech. The cost is one more hop (audio download + transcription) inside LINE's reply-token window, which made the next decision non-optional.
+
+**Length is bounded to protect the reply-token deadline.** The whole async design only works if the worker replies before LINE's reply token goes stale (~55s), and the worker itself runs in a 60s Lambda. Transcription sits on top of the existing parse-and-estimate chain, so a long recording can blow the budget and the reply just silently vanishes. The guard rejects over-long clips at the webhook — LINE reports a `duration` on the audio event, so a clip past 60s is declined immediately with the *fresh* reply token, before any enqueue, transcription, or Lambda spend. A byte-size cap before the transcription call backs it up against the provider's hard file limit. Rejecting at the door, not after the work, is what keeps the token fresh.
+
+**The enqueue switch has to be exhaustive — and tested per type.** This is where it went wrong. The publisher that puts a job on the queue maps each input type to an event tag through a `switch`; the `line_audio` case was missing, so audio fell through to a `default` that returned an error *before* the message was ever sent. The result was a perfect trap: the job row got created (so the loading animation showed), but no queue message existed, so the worker was never triggered. Feature wired, feature silently inert. The fix was one case; the real fix was a per-type test asserting each input type actually publishes, which is the test that would have caught it on day one.
+
+## Hindsight, honestly
+
+- **Cross-environment behavior inconsistency was the worst trap.** The local stack runs the worker as a loop that polls the database directly; AWS runs it triggered by the queue. Those two paths diverge exactly at the publisher — so the missing switch case was completely invisible locally (the poller finds the job regardless) and broke only in dev. The bug lived in the one seam that the environment I develop in most can't exercise. Lesson filed: when local and deployed take different routes to the same work, the routing itself is the thing that needs a test, because nothing else will touch it.
+- **Missing observability stretched a ten-minute diagnosis into an afternoon.** I couldn't read the deployed logs — the IAM identity on hand had no CloudWatch access — so I reconstructed the failure from the `intake_jobs` table instead: `status=pending, attempts=0` said "never claimed," and later a real error string in `error_message` handed me the exact provider response. The job-state columns turned out to be the fallback telemetry that saved the session. Worth building that readable state on purpose next time, not discovering it under pressure. (Adjacent footnote from the same afternoon: a restricted third-party key that worked for text and images still 401'd on audio because it lacked that one endpoint's scope — capability is per-endpoint, verify it per-endpoint.)
