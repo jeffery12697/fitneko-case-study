@@ -19,6 +19,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **TDEE-assisted goals** — one message computes personal targets; missing fields are asked one at a time, then confirmed.
 - **Workouts & guided strength sessions** — MET-based burn estimates; mid-workout, a set is logged by typing `10x70`.
 - **Taiwan food catalog** — 2,500+ items with source-tracked official nutrition; exact hits beat LLM guesses, unknowns still estimate.
+- **Zero-token fast path** — common foods, your saved foods, and your own past corrections resolve straight to a log with no LLM call at all; the model is spent only on genuinely new input, and a mis-read safely falls back rather than logging the wrong food.
 - **Hand-shaken drinks, decomposed** — brand × base × sugar level × toppings × cup size, costed by a deterministic engine; sugar is a first-class field.
 - **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
 - **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
@@ -32,7 +33,9 @@ flowchart TD
     LINE[LINE webhook] --> WH[Ack in ms<br/>persist + enqueue] --> Q[SQS] --> W[Worker]
     W --> RP{13 intent rules,<br/>fixed order}
     RP -->|match| SVC[Diet service]
-    RP -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
+    RP -->|no match| KF{Known-food resolver<br/>saved, past logs, catalog}
+    KF -->|hit, 0 tokens| SVC
+    KF -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
     W -.->|photos| VIS[Vision] -.-> SVC
     W -.->|voice| STT[Transcribe<br/>Whisper] -.-> RP
     SVC --> CAT[(Taiwan food +<br/>drink catalog)]
@@ -41,15 +44,15 @@ flowchart TD
     LIFF[LIFF MINI app<br/>React, inside LINE] --> API[REST Lambda] --> PG
 ```
 
-<sub>Catalog beats estimator; unknowns still estimate. A credit guard meters the vision path. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Known foods resolve before the LLM at zero cost; catalog beats estimator; unknowns still estimate. A credit guard meters the vision path. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~22.7k LOC application Go · ~6.2k LOC TypeScript/React · ~23.4k LOC Go tests (109 files) · 27 migrations · 650 commits
+**Scale:** ~24.2k LOC application Go · ~6.4k LOC TypeScript/React · ~25.5k LOC Go tests (130 files) · 30 migrations · 677 commits
 
 ## Deep dives
 
-The interesting engineering lives in six decisions:
+The interesting engineering lives in seven decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -59,6 +62,7 @@ The interesting engineering lives in six decisions:
 | 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world, TTL-bounded and gracefully degrading. |
 | 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | One e2e suite ran unchanged before and after the serverless migration — guarding it, not rewritten by it. |
 | 6 | [History is fact, a plan is a template](deep-dives/06-history-vs-template.md) | An autosave was silently erasing training history; the fix was classifying every row as fact or template. |
+| 7 | [The cheapest LLM call is the one you never make](deep-dives/07-known-food-passthrough.md) | Known foods resolve before the model at zero cost, gated by a whitelist so a mis-read falls back instead of logging wrong data. |
 
 ## Engineering practices
 
