@@ -18,7 +18,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Conversational corrections** — `把早餐的蛋改成兩顆` / `delete the latte from lunch`, targeted at any past entry.
 - **TDEE-assisted goals** — one message computes personal targets; missing fields are asked one at a time, then confirmed.
 - **Workouts & guided strength sessions** — MET-based burn estimates; mid-workout, a set is logged by typing `10x70`.
-- **Taiwan food catalog** — 2,500+ items with source-tracked official nutrition; exact hits beat LLM guesses, unknowns still estimate.
+- **Taiwan food catalog** — 2,500+ items with source-tracked official nutrition; exact hits beat LLM guesses, unknowns still estimate. Store brands are parsed out of the text (`全家…`, `7-11…`), so a brand-prefixed food still matches its brand-free catalog row.
 - **Zero-token fast path** — common foods, your saved foods, and your own past corrections resolve straight to a log with no LLM call at all; the model is spent only on genuinely new input, and a mis-read safely falls back rather than logging the wrong food.
 - **Hand-shaken drinks, decomposed** — brand × base × sugar level × toppings × cup size, costed by a deterministic engine; sugar is a first-class field.
 - **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
@@ -48,7 +48,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~24.2k LOC application Go · ~6.4k LOC TypeScript/React · ~25.5k LOC Go tests (130 files) · 30 migrations · 677 commits
+**Scale:** ~24.6k LOC application Go · ~6.4k LOC TypeScript/React · ~26.6k LOC Go tests (139 files) · 36 migrations · 694 commits
 
 ## Deep dives
 

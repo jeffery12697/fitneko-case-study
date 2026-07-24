@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Store brands: when naming the shop hid the food](2026-07-store-brand-matching.md) | Store-brand-aware matching |
 | 2026-07 | [Known-food passthrough: the cheapest LLM call is the one you never make](2026-07-known-food-passthrough.md) | Known-food passthrough (zero-token fast path) |
 | 2026-07 | [Phase 19c: voice input, and the queue that never got the message](2026-07-phase-19c-voice-messages.md) | Phase 19c (voice messages) |
 | 2026-07 | [Polish: the week the MINI app became a product](2026-07-liff-polish-neko-branding.md) | Delivery: LIFF polish & mascot branding |
