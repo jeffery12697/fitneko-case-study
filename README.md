@@ -23,6 +23,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Hand-shaken drinks, decomposed** — brand × base × sugar level × toppings × cup size, costed by a deterministic engine; sugar is a first-class field.
 - **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
 - **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
+- **A coach with a voice** — deterministic replies carry a cat-coach one-liner picked by context (late-night, over/under target, a logged weight), appended after the numbers and never replacing them; the brand voice is lint-enforced, and it stays silent where a line would just repeat the receipt.
 - Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
 
 ## System at a glance
@@ -48,7 +49,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~24.6k LOC application Go · ~6.4k LOC TypeScript/React · ~26.6k LOC Go tests (139 files) · 36 migrations · 694 commits
+**Scale:** ~25.0k LOC application Go · ~6.4k LOC TypeScript/React · ~27.6k LOC Go tests (143 files) · 36 migrations · 699 commits
 
 ## Deep dives
 
