@@ -24,6 +24,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
 - **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
 - **A coach with a voice** — deterministic replies carry a cat-coach one-liner picked by context (late-night, over/under target, a logged weight), appended after the numbers and never replacing them; the brand voice is lint-enforced, and it stays silent where a line would just repeat the receipt.
+- **A coach that remembers the conversation** — model calls carry your targets, latest weight (with its date), and the last 30 minutes of dialogue, so `把剛剛那個便當改半份` resolves across messages; assembled deterministically, retained 7 days, and never touched on zero-token paths.
 - Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
 
 ## System at a glance
@@ -37,6 +38,7 @@ flowchart TD
     RP -->|no match| KF{Known-food resolver<br/>saved, past logs, catalog}
     KF -->|hit, 0 tokens| SVC
     KF -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
+    PG -.->|memory context:<br/>user card + 30-min window| LLM
     W -.->|photos| VIS[Vision] -.-> SVC
     W -.->|voice| STT[Transcribe<br/>Whisper] -.-> RP
     SVC --> CAT[(Taiwan food +<br/>drink catalog)]
@@ -49,7 +51,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~25.0k LOC application Go · ~6.4k LOC TypeScript/React · ~27.6k LOC Go tests (143 files) · 36 migrations · 699 commits
+**Scale:** ~25.4k LOC application Go · ~6.4k LOC TypeScript/React · ~28.3k LOC Go tests (150 files) · 37 migrations · 702 commits
 
 ## Deep dives
 
