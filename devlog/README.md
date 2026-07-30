@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-07 | [Phase 21b: the weekly coach — numbers from the database, opinions from the model](2026-07-phase-21b-weekly-coach.md) | Phase 21b (weekly report, snapshots, premium push) |
 | 2026-07 | [Phase 18b: giving the cat a memory, without paying for a diary](2026-07-phase-18b-memory-foundation.md) | Phase 18b (memory foundation: user card + conversation window) |
 | 2026-07 | [Phase 18b: giving the cat a voice without giving it a microphone](2026-07-phase-18b-tone-layer.md) | Phase 18b (deterministic tone layer) |
 | 2026-07 | [Store brands: when naming the shop hid the food](2026-07-store-brand-matching.md) | Store-brand-aware matching |

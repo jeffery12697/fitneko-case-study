@@ -25,6 +25,9 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
 - **A coach with a voice** — deterministic replies carry a cat-coach one-liner picked by context (late-night, over/under target, a logged weight), appended after the numbers and never replacing them; the brand voice is lint-enforced, and it stays silent where a line would just repeat the receipt.
 - **A coach that remembers the conversation** — model calls carry your targets, latest weight (with its date), and the last 30 minutes of dialogue, so `把剛剛那個便當改半份` resolves across messages; assembled deterministically, retained 7 days, and never touched on zero-token paths.
+- **Daily suggestions** — "what should I eat?" answers from your *remaining* budget for the day; candidates come from your saved foods, history, and the catalog, with what you already ate today (and what was recommended in the last few days) demoted so the coach doesn't repeat itself.
+- **Weekly coach report** — a report card of the week: deterministic stats (days on target, averages, weight delta, workouts, streak) plus LLM commentary that never restates the numbers; past weeks are snapshotted and replay free, and premium users get theirs pushed every Monday morning.
+- **Streaks & achievements** — logging streaks and milestone achievements, paid out in the same credit currency the coach features spend.
 - Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
 
 ## System at a glance
@@ -33,7 +36,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
     LINE[LINE webhook] --> WH[Ack in ms<br/>persist + enqueue] --> Q[SQS] --> W[Worker]
-    W --> RP{13 intent rules,<br/>fixed order}
+    SCHED[Weekly scheduler<br/>Mon 08:00] --> Q
+    W --> RP{12 intent rules,<br/>fixed order}
     RP -->|match| SVC[Diet service]
     RP -->|no match| KF{Known-food resolver<br/>saved, past logs, catalog}
     KF -->|hit, 0 tokens| SVC
@@ -43,7 +47,7 @@ flowchart TD
     W -.->|voice| STT[Transcribe<br/>Whisper] -.-> RP
     SVC --> CAT[(Taiwan food +<br/>drink catalog)]
     SVC --> PG[(PostgreSQL)]
-    SVC --> REPLY[LINE reply]
+    SVC --> REPLY[LINE reply / push]
     LIFF[LIFF MINI app<br/>React, inside LINE] --> API[REST Lambda] --> PG
 ```
 
@@ -51,7 +55,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~25.4k LOC application Go · ~6.4k LOC TypeScript/React · ~28.3k LOC Go tests (150 files) · 37 migrations · 702 commits
+**Scale:** ~29.9k LOC application Go · ~6.4k LOC TypeScript/React · ~32.6k LOC Go tests (185 files) · 44 migrations · 720 commits
 
 ## Deep dives
 
@@ -60,7 +64,7 @@ The interesting engineering lives in seven decisions:
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
 | 1 | [Async intake: acknowledge fast, reply later](deep-dives/01-async-intake-pipeline.md) | LINE webhooks can't wait for an LLM — enqueue, return 200, treat the reply token as perishable. |
-| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | 13 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
+| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | 12 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
 | 3 | [One interface, two LLM providers](deep-dives/03-llm-provider-abstraction.md) | OpenAI and Anthropic force structure differently; unifying them shaped the parsing layer. |
 | 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world, TTL-bounded and gracefully degrading. |
 | 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | One e2e suite ran unchanged before and after the serverless migration — guarding it, not rewritten by it. |
