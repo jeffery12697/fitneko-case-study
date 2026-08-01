@@ -6,6 +6,8 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Phase 22b (part 2): the sticker wall — achievements you can look at](2026-08-phase-22b-sticker-wall.md) | Phase 22b (sticker wall + animated v2) |
+| 2026-07 | [Phase 22b (part 1): the weekly report gets a full page](2026-07-phase-22b-weekly-report-liff.md) | Phase 22b (weekly report LIFF page) |
 | 2026-07 | [Phase 21b: the weekly coach — numbers from the database, opinions from the model](2026-07-phase-21b-weekly-coach.md) | Phase 21b (weekly report, snapshots, premium push) |
 | 2026-07 | [Phase 23: streaks with no streak table](2026-07-phase-23-achievement-system.md) | Phase 23 (streaks & achievements) |
 | 2026-07 | [Phase 21a: a recommender that can't hallucinate lunch](2026-07-phase-21a-daily-advice.md) | Phase 21a (daily suggestions, text + menu photo) |

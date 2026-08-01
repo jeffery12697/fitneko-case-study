@@ -26,8 +26,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - **A coach with a voice** — deterministic replies carry a cat-coach one-liner picked by context (late-night, over/under target, a logged weight), appended after the numbers and never replacing them; the brand voice is lint-enforced, and it stays silent where a line would just repeat the receipt.
 - **A coach that remembers the conversation** — model calls carry your targets, latest weight (with its date), and the last 30 minutes of dialogue, so `把剛剛那個便當改半份` resolves across messages; assembled deterministically, retained 7 days, and never touched on zero-token paths.
 - **Daily suggestions** — "what should I eat?" answers from your *remaining* budget for the day; candidates come from your saved foods, history, and the catalog, with what you already ate today (and what was recommended in the last few days) demoted so the coach doesn't repeat itself.
-- **Weekly coach report** — a report card of the week: deterministic stats (days on target, averages, weight delta, workouts, streak) plus LLM commentary that never restates the numbers; past weeks are snapshotted and replay free, and premium users get theirs pushed every Monday morning.
-- **Streaks & achievements** — logging streaks and milestone achievements, paid out in the same credit currency the coach features spend.
+- **Weekly coach report** — a report card of the week: deterministic stats (days on target, averages, weight delta, workouts, streak) plus LLM commentary that never restates the numbers; past weeks are snapshotted and replay free, and premium users get theirs pushed every Monday morning. A full report page in the MINI app adds the day-by-day chart and every past week; the chat card deep-links straight to it.
+- **Streaks & achievements, made collectible** — milestones pay out credits *and* unlock stickers on a 3×3 wall in the MINI app: unlocked ones play a short animation when tapped, locked ones hide behind a silhouette and a "?" until earned.
 - Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
 
 ## System at a glance
@@ -35,27 +35,26 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 ```mermaid
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
-    LINE[LINE webhook] --> WH[Ack in ms<br/>persist + enqueue] --> Q[SQS] --> W[Worker]
-    SCHED[Weekly scheduler<br/>Mon 08:00] --> Q
-    W --> RP{12 intent rules,<br/>fixed order}
-    RP -->|match| SVC[Diet service]
-    RP -->|no match| KF{Known-food resolver<br/>saved, past logs, catalog}
-    KF -->|hit, 0 tokens| SVC
-    KF -->|no match| LLM[LLM parser<br/>OpenAI / Anthropic] --> SVC
-    PG -.->|memory context:<br/>user card + 30-min window| LLM
-    W -.->|photos| VIS[Vision] -.-> SVC
-    W -.->|voice| STT[Transcribe<br/>Whisper] -.-> RP
-    SVC --> CAT[(Taiwan food +<br/>drink catalog)]
-    SVC --> PG[(PostgreSQL)]
+    LINE[LINE message<br/>text · photo · voice] --> IN[Async intake<br/>ack in ms → queue → worker]
+    IN --> RP
+
+    subgraph FUNNEL [Parsing funnel — cheapest layer wins]
+        direction TB
+        RP["1 · intent rules"] -- miss --> KF["2 · known foods<br/>0 tokens"] -- miss --> LLM["3 · LLM parser"]
+    end
+
+    FUNNEL --> SVC[Diet service]
+    SVC --> PG[(PostgreSQL<br/>logs · snapshots · food catalog)]
     SVC --> REPLY[LINE reply / push]
-    LIFF[LIFF MINI app<br/>React, inside LINE] --> API[REST Lambda] --> PG
+    REPLY -. cards deep-link .-> LIFF[MINI app<br/>React, inside LINE]
+    LIFF -- REST --> PG
 ```
 
-<sub>Known foods resolve before the LLM at zero cost; catalog beats estimator; unknowns still estimate. A credit guard meters the vision path. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~29.9k LOC application Go · ~6.4k LOC TypeScript/React · ~32.6k LOC Go tests (185 files) · 44 migrations · 720 commits
+**Scale:** ~30.4k LOC application Go · ~8.3k LOC TypeScript/React · ~33.6k LOC Go tests (187 files) · 44 migrations · 738 commits
 
 ## Deep dives
 
