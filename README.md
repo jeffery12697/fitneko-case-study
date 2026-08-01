@@ -12,23 +12,26 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 ## What it does
 
-- **Natural-language logging** — free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
-- **Photo intake** — meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
-- **Voice logging** — send a LINE voice message and it's transcribed (OpenAI Whisper), then flows through the exact same parsing as typed text; over-long clips are declined up front.
-- **Conversational corrections** — `把早餐的蛋改成兩顆` / `delete the latte from lunch`, targeted at any past entry.
-- **TDEE-assisted goals** — one message computes personal targets; missing fields are asked one at a time, then confirmed.
-- **Workouts & guided strength sessions** — MET-based burn estimates; mid-workout, a set is logged by typing `10x70`.
-- **Taiwan food catalog** — 2,500+ items with source-tracked official nutrition; exact hits beat LLM guesses, unknowns still estimate. Store brands are parsed out of the text (`全家…`, `7-11…`), so a brand-prefixed food still matches its brand-free catalog row.
-- **Zero-token fast path** — common foods, your saved foods, and your own past corrections resolve straight to a log with no LLM call at all; the model is spent only on genuinely new input, and a mis-read safely falls back rather than logging the wrong food.
-- **Hand-shaken drinks, decomposed** — brand × base × sugar level × toppings × cup size, costed by a deterministic engine; sugar is a first-class field.
-- **A MINI app for review-heavy tasks** — dashboard, editable history, training-plan editor, trends, settings; same LINE identity, bilingual, animated mascot.
-- **Cost guardrails** — daily free credits for image vision, confirm-before-spend on permanent credits, every movement ledgered.
-- **A coach with a voice** — deterministic replies carry a cat-coach one-liner picked by context (late-night, over/under target, a logged weight), appended after the numbers and never replacing them; the brand voice is lint-enforced, and it stays silent where a line would just repeat the receipt.
-- **A coach that remembers the conversation** — model calls carry your targets, latest weight (with its date), and the last 30 minutes of dialogue, so `把剛剛那個便當改半份` resolves across messages; assembled deterministically, retained 7 days, and never touched on zero-token paths.
-- **Daily suggestions** — "what should I eat?" answers from your *remaining* budget for the day; candidates come from your saved foods, history, and the catalog, with what you already ate today (and what was recommended in the last few days) demoted so the coach doesn't repeat itself.
-- **Weekly coach report** — a report card of the week: deterministic stats (days on target, averages, weight delta, workouts, streak) plus LLM commentary that never restates the numbers; past weeks are snapshotted and replay free, and premium users get theirs pushed every Monday morning. A full report page in the MINI app adds the day-by-day chart and every past week; the chat card deep-links straight to it.
-- **Streaks & achievements, made collectible** — milestones pay out credits *and* unlock stickers on a 3×3 wall in the MINI app: unlocked ones play a short animation when tapped, locked ones hide behind a silhouette and a "?" until earned.
-- Plus: personal saved foods, weight tracking, daily summaries, in-chat help.
+**Log by talking.**
+- Free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
+- Meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
+- Voice messages are transcribed (Whisper) and flow through the same parser as text.
+- Corrections in plain language — `把早餐的蛋改成兩顆`, `delete the latte from lunch` — against any past entry.
+
+**Know the food.**
+- A 2,500+ item Taiwan food catalog with source-tracked official nutrition; an exact hit always beats an LLM guess, and store-brand prefixes (`全家…`, `7-11…`) are parsed away before matching.
+- Hand-shaken drinks decomposed — brand × base × sugar × toppings × cup size — costed by a deterministic engine.
+- Common foods, your saved foods, and your past corrections resolve with **zero LLM tokens**; the model is spent only on genuinely new input.
+
+**Coach, not just count.**
+- TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set).
+- A cat coach with a voice: context-picked one-liners appended after the numbers, never replacing them — and a memory of your targets, latest weight, and the last 30 minutes of conversation.
+- Daily "what should I eat?" answers from your *remaining* budget; a weekly report card — deterministic stats + LLM commentary that never restates them — with a full page and history in the MINI app, pushed every Monday for premium.
+- Streaks and achievements pay out credits and unlock a collectible sticker wall: unlocked stickers animate when tapped, locked ones hide behind a silhouette and a "?".
+
+**Built like a product.**
+- The MINI app covers what chat is bad at — dashboard, editable history, trends, training-plan editor — bilingual, same LINE identity.
+- Cost guardrails on every LLM and vision call: daily free credits, confirm-before-spend, every movement ledgered.
 
 ## System at a glance
 
@@ -50,7 +53,7 @@ flowchart TD
     LIFF -- REST --> PG
 ```
 
-<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
