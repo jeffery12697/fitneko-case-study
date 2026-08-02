@@ -6,6 +6,8 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [The day I added the checks, and the checks started talking back](2026-08-ci-hardening.md) | Delivery: CI checks, deploy gate, CI cost |
+| 2026-08 | [Phase 22c: the data assets finally get a front door](2026-08-phase-22c-catalog-search.md) | Phase 22c (catalog + drink search in the MINI app) |
 | 2026-08 | [Phase 22b (part 2): the sticker wall — achievements you can look at](2026-08-phase-22b-sticker-wall.md) | Phase 22b (sticker wall + animated v2) |
 | 2026-07 | [Phase 22b (part 1): the weekly report gets a full page](2026-07-phase-22b-weekly-report-liff.md) | Phase 22b (weekly report LIFF page) |
 | 2026-07 | [Phase 21b: the weekly coach — numbers from the database, opinions from the model](2026-07-phase-21b-weekly-coach.md) | Phase 21b (weekly report, snapshots, premium push) |
