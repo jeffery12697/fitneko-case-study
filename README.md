@@ -30,7 +30,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Streaks and achievements pay out credits and unlock a collectible sticker wall: unlocked stickers animate when tapped, locked ones hide behind a silhouette and a "?".
 
 **Built like a product.**
-- The MINI app covers what chat is bad at — dashboard, editable history, trends, training-plan editor — bilingual, same LINE identity.
+- The MINI app covers what chat is bad at — dashboard, editable history, trends, training-plan editor, and a search box over the food and drink catalogs where a drink's size, sweetness and toppings are dialed in by tapping — bilingual, same LINE identity.
 - Cost guardrails on every LLM and vision call: daily free credits, confirm-before-spend, every movement ledgered.
 
 ## System at a glance
@@ -50,14 +50,15 @@ flowchart TD
     SVC --> PG[(PostgreSQL<br/>logs · snapshots · food catalog)]
     SVC --> REPLY[LINE reply / push]
     REPLY -. cards deep-link .-> LIFF[MINI app<br/>React, inside LINE]
-    LIFF -- REST --> PG
+    LIFF -- REST reads --> PG
+    LIFF -- "logging re-enters the same estimator" --> SVC
 ```
 
 <sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~30.4k LOC application Go · ~8.3k LOC TypeScript/React · ~33.6k LOC Go tests (187 files) · 44 migrations · 738 commits
+**Scale:** ~30.9k LOC application Go · ~10.0k LOC TypeScript/React · ~34.8k LOC Go tests (192 files) · 44 migrations · 780 commits
 
 ## Deep dives
 
@@ -77,7 +78,8 @@ The interesting engineering lives in seven decisions:
 
 - **Spec-first phases** — every phase starts from a written spec with numbered requirements and explicit error cases (~24 phases so far).
 - **TDD against behavior** — tests assert on replies sent and rows written, never internals; a one-command e2e harness (deterministic mock tier + LLM-judged real tier) survived the serverless migration unchanged.
-- **CI on every push** — Go + web suites, mock-tier e2e, Lambda smoke builds, Playwright browser e2e, and a backup-restore proof; ~3 minutes, zero real credentials.
+- **CI on every push** — Go + web suites, mock-tier e2e, Lambda smoke builds, Playwright browser e2e, terraform validate, and a backup-restore proof; ~3 minutes, zero real credentials, and jobs are skipped when a change can't affect them.
+- **Checks the tests can't do** — linter, call-path vulnerability scanning and workflow linting gate every merge; grouped dependency updates land weekly, security fixes immediately. Deploys are gated on CI passing, pinned to the exact commit that passed.
 - **CD with zero stored keys** — every merge auto-deploys a dev environment via GitHub OIDC; prod is a two-step plan-then-apply, every deploy tagged.
 - **Migrations as code** — versioned up/down SQL pairs, applied idempotently by the pipeline.
 - **Graceful degradation by default** — LLM retries with backoff, clarification failures re-prompt, unreadable images never fabricate a log.
