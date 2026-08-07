@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Phase 20c (part 2): three more tea chains, and every one broke an assumption](2026-08-phase-20c-brand-expansion.md) | Phase 20c (multi-brand drink catalog expansion) |
 | 2026-08 | [The day I added the checks, and the checks started talking back](2026-08-ci-hardening.md) | Delivery: CI checks, deploy gate, CI cost |
 | 2026-08 | [Phase 22c: the data assets finally get a front door](2026-08-phase-22c-catalog-search.md) | Phase 22c (catalog + drink search in the MINI app) |
 | 2026-08 | [Phase 22b (part 2): the sticker wall — achievements you can look at](2026-08-phase-22b-sticker-wall.md) | Phase 22b (sticker wall + animated v2) |

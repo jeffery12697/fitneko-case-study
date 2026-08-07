@@ -20,7 +20,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 **Know the food.**
 - A 2,500+ item Taiwan food catalog with source-tracked official nutrition; an exact hit always beats an LLM guess, and store-brand prefixes (`全家…`, `7-11…`) are parsed away before matching.
-- Hand-shaken drinks decomposed — brand × base × sugar × toppings × cup size — costed by a deterministic engine.
+- Hand-shaken drinks decomposed — brand × base × sugar × toppings × cup size — costed by a deterministic engine over six tea chains' official figures, with each chain's own sugar ladder, cup sizes, topping menu and vocabulary curated per brand.
 - Common foods, your saved foods, and your past corrections resolve with **zero LLM tokens**; the model is spent only on genuinely new input.
 
 **Coach, not just count.**
@@ -58,7 +58,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~30.9k LOC application Go · ~10.0k LOC TypeScript/React · ~34.8k LOC Go tests (192 files) · 44 migrations · 780 commits
+**Scale:** ~31.5k LOC application Go · ~10.6k LOC TypeScript/React · ~36.2k LOC Go tests (193 files) · 46 migrations · 790 commits
 
 ## Deep dives
 
