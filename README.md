@@ -64,7 +64,7 @@ flowchart TD
 
 ## Deep dives
 
-The interesting engineering lives in seven decisions:
+The interesting engineering lives in eight decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -75,6 +75,7 @@ The interesting engineering lives in seven decisions:
 | 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | One e2e suite ran unchanged before and after the serverless migration — guarding it, not rewritten by it. |
 | 6 | [History is fact, a plan is a template](deep-dives/06-history-vs-template.md) | An autosave was silently erasing training history; the fix was classifying every row as fact or template. |
 | 7 | [The cheapest LLM call is the one you never make](deep-dives/07-known-food-passthrough.md) | Known foods resolve before the model at zero cost, gated by a whitelist so a mis-read falls back instead of logging wrong data. |
+| 8 | [The payment callback is a protocol, not a notification](deep-dives/08-payment-callback-protocol.md) | My HTTP response tells the provider whether to retry — so a permanent failure is acknowledged with success, and idempotency lives in the database, not in an `if`. |
 
 ## Engineering practices
 
