@@ -1,0 +1,34 @@
+# 2026-08 — Taking money: a payment loop where the failure modes cost real currency
+
+*The product had a premium tier, a credit economy, and no way to pay for anything. This phase built the whole loop — an in-app purchase page, a hosted checkout at Taiwan's ECPay, a signed server-to-server callback that grants access, and an expiry reminder push — against ECPay's test environment, then verified it against a live test card. Shipped as PRs #170–#174. Every design choice below is really the same choice: keep the number of ways this can silently take money without granting access at zero.*
+
+## The problem
+
+Everything before this phase failed safely. A misparsed meal logs the wrong calories and the user corrects it; a failed image recognition refunds the credit and apologises. Payment has no such forgiveness: a callback dropped on the floor means a card was charged and nothing was unlocked, and the user's next move is a complaint I can't answer from logs I never wrote. The phase had to be built assuming the callback would be replayed, forged, arrive twice, arrive out of order, and arrive for an order that no longer matches the price it was created with.
+
+## Decisions
+
+**Hosted checkout, credit card only.** ECPay's all-in-one redirect page means card numbers never touch my infrastructure — no PCI scope, and the whole 3D Secure dance (mandatory in Taiwan since 2022, which also shifts fraud liability to the issuer) is somebody else's correctly-implemented problem. The alternatives were an embedded card form (extra application, compliance burden) or the direct API (PCI DSS certification), both absurd for a solo product taking its first NT$199. Non-card methods — ATM transfer, convenience-store codes — are asynchronous: the user leaves and pays hours later, which is a different and much larger state machine. Deferred until someone actually asks.
+
+**The price exists in exactly one place, and the client never sends it.** The purchase page posts a plan code (`pass_30`, `pass_90`, `pass_365`), and the server looks up amount and duration from a table in code. This closes the entire class of "edit the amount in devtools" attacks by construction rather than by validation, and it means the callback can re-verify the amount it was told against the amount the order was created with — a mismatch is a permanent failure, loudly logged, never credited.
+
+**Idempotency lives on the order number, and paid is an absorbing state.** ECPay will resend a callback until it gets `1|OK`, so duplicates are the normal case, not the edge case. Crediting runs in one database transaction: lock the order row, refuse the transition if it is already paid, extend the premium expiry, mark paid. The expiry extension is deliberately `GREATEST(current_expiry, now()) + duration` — renewing early stacks onto the remaining time rather than throwing it away, which is what a user who buys again on day 80 of 90 obviously means. `created` and `failed` can both become `paid` (a card retry after a decline is normal); nothing can leave `paid`.
+
+**The response code is a protocol, not a status report.** Transient failures — the database is unreachable — return 500 so ECPay retries. Permanent failures — unknown order number, amount mismatch, a "simulated payment" flag arriving in an environment that forbids it — acknowledge with `1|OK` and a loud log, because a callback that can never succeed must not be retried forever; the retry storm is the bug, not the fix. Signature verification (a SHA-256 MAC over the sorted parameters, with a hash key and IV) runs before any of that, and a forged callback gets a 400 with a warning line, never a database write.
+
+**Refunds are excluded by prior consent, on purpose.** Taiwan's consumer law lets an online service that is delivered the instant it is paid for exclude the seven-day cooling-off right, provided the buyer consents in advance. The purchase page therefore gates its button behind a single checkbox that also carries the age declaration, and the copy says exactly what is being waived. Individual complaints get handled by hand through ECPay's dashboard. Building a refund *feature* for a product with zero paying users would have been the most expensive way to prepare for a problem that may never arrive.
+
+**Full request and callback bodies are archived as structured data.** Both the outgoing checkout parameters and the incoming callback are stored on the order row as JSON, and the API log retention was raised to six months. There is no reconciliation dashboard — a SQL query against those columns is the reconciliation dashboard, and it will keep working long after any dashboard I'd have built this month stopped being maintained.
+
+## What the tests couldn't catch, and the test that did
+
+The launch-blocking bug was found by the final whole-branch review, not by any of the eighteen task-level test suites: the callback arrives `x-www-form-urlencoded`, and that raw body was being written straight into a JSON column. Postgres rejects it, the transaction rolls back, the handler returns 500 — so *every real payment would have charged the card and granted nothing*, forever, while ECPay retried into a wall. Every unit test passed, because each one had been written with a hand-built parameter map and a fake store: the seam where a form-encoded body meets a JSON column existed only in the wiring that no unit test crossed.
+
+The fix was one line. The lesson was a rule: on a money path, a handler-to-real-database integration test is not optional, and that test now exists specifically to re-break this bug if anyone reintroduces it.
+
+The other verification that mattered was manual. A live 14-item smoke run against the test merchant — real card, real 3D Secure, real callback — surfaced three things no amount of local testing would have: the failed-then-recovered payment path (my own first attempt failed because ECPay's test card still demands a real phone number for the SMS one-time password), the stacking arithmetic proving itself against a pre-existing expiry date, and the rate limit landing exactly where intended on the sixth attempt.
+
+## Hindsight, honestly
+
+- **The eighteen-task plan bought correctness but not integration confidence.** Each task shipped with tests that proved its own unit; the one bug that would have broken production lived precisely between two tasks. If the plan had specified the end-to-end integration test as task one — a real handler, a real database, a real form-encoded body — the critical bug would have failed on day one instead of surviving to the final review.
+- **Excluding refunds was the right scope call and the uncomfortable one.** It is defensible law and obviously correct engineering economics, but it also means the first unhappy customer is handled by me, by hand, in a vendor dashboard. That is a deliberate trade of automation for time-to-launch, and it should be revisited the moment there is a second unhappy customer.
