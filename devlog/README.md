@@ -6,8 +6,11 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Drawing the app instead of screenshotting it](2026-08-landing-app-screens.md) | Marketing site (homepage app-showcase section, CSS-drawn screens) |
+| 2026-08 | [Every endpoint gets a real name, and prod isn't allowed to go first](2026-08-custom-domain.md) | Delivery: custom domain (fitneko.app across app/api/webhook/site) |
 | 2026-08 | [Naming the paywall, then building the wall it implies](2026-08-coach-pass-free-tier-gates.md) | Coach PASS (tier naming, purchase page, free-tier quota gates) |
 | 2026-08 | [Taking money: a payment loop where the failure modes cost real currency](2026-08-payment-ecpay.md) | Payments (ECPay hosted checkout, signed callback, expiry reminders) |
+| 2026-08 | [The marketing site: a storefront with no build step](2026-08-public-marketing-site.md) | Marketing site (public pages for conversion + payment review) |
 | 2026-08 | [Phase 20c (part 2): three more tea chains, and every one broke an assumption](2026-08-phase-20c-brand-expansion.md) | Phase 20c (multi-brand drink catalog expansion) |
 | 2026-08 | [The day I added the checks, and the checks started talking back](2026-08-ci-hardening.md) | Delivery: CI checks, deploy gate, CI cost |
 | 2026-08 | [Phase 22c: the data assets finally get a front door](2026-08-phase-22c-catalog-search.md) | Phase 22c (catalog + drink search in the MINI app) |

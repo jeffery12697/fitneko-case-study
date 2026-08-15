@@ -34,6 +34,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Cost guardrails on every LLM and vision call: earned credits, confirm-before-spend, every movement ledgered.
 - A paid tier you can actually buy: pick a month / season / year card in the MINI app, pay on a hosted checkout (no card data on my infrastructure), and access is extended by a signature-verified callback that is idempotent on the order number and stacks onto whatever time is left. Expiry reminders are pushed before it lapses.
 - The free tier is a defined product, not an unbounded one: text logging, saved foods and training plans have published limits; voice, photo recognition and the coaching features are what the pass unlocks. Over-quota never blocks a recording the catalog can already resolve.
+- A public storefront on a self-owned domain: a hand-written static marketing site (same design tokens as the app, zero build step) carries the product, pricing, terms and refund pages a payment review requires, and every endpoint — app, API, webhook, site — lives on `fitneko.app` subdomains with the provider URLs kept alive as a rollback path.
 
 ## System at a glance
 
@@ -58,9 +59,9 @@ flowchart TD
 
 <sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. The free-tier quota check sits *between* layers 2 and 3 — an over-quota free user still logs anything the catalog already knows, and only genuinely new input asks them to upgrade. Buying a pass leaves for a hosted checkout and comes back as a signed server-to-server callback that extends access in one transaction; orders and usage counters live in the same database. Full detail in the [deep dives](#deep-dives).</sub>
 
-**Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
+**Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~33.4k LOC application Go · ~12.6k LOC TypeScript/React · ~41.3k LOC Go tests (204 files) · 49 migrations · 855 commits
+**Scale:** ~33.6k LOC application Go · ~12.7k LOC TypeScript/React · ~41.6k LOC Go tests (205 files) · 49 migrations · 887 commits
 
 ## Deep dives
 
