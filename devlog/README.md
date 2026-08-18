@@ -6,6 +6,9 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Asking the user what the photo is for](2026-08-image-intent-routing.md) | Image intent routing (Quick Reply selection, per-intent vision profiles) |
+| 2026-08 | [Phase 24: an invite code that isn't worth abusing](2026-08-phase-24-invite.md) | Phase 24 (invite flow, referral rewards, credit-economy knobs) |
+| 2026-08 | [The English site, the legal pages, and a mailbox that has to actually work](2026-08-bilingual-site-and-legal-pages.md) | Public site i18n + legal pages; MINI app on its own domain |
 | 2026-08 | [Drawing the app instead of screenshotting it](2026-08-landing-app-screens.md) | Marketing site (homepage app-showcase section, CSS-drawn screens) |
 | 2026-08 | [Every endpoint gets a real name, and prod isn't allowed to go first](2026-08-custom-domain.md) | Delivery: custom domain (fitneko.app across app/api/webhook/site) |
 | 2026-08 | [Naming the paywall, then building the wall it implies](2026-08-coach-pass-free-tier-gates.md) | Coach PASS (tier naming, purchase page, free-tier quota gates) |

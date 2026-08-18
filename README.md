@@ -14,7 +14,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 **Log by talking.**
 - Free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
-- Meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
+- Upload a photo and the bot asks what it's for — log this meal, read the nutrition label, or size up a menu — then runs a purpose-built vision profile for that answer; nothing is downloaded or charged until you tap. Meal photos get portion estimates; nutrition labels get OCR'd, then the bot asks how much you ate.
 - Voice messages are transcribed (Whisper) and flow through the same parser as text.
 - Corrections in plain language — `把早餐的蛋改成兩顆`, `delete the latte from lunch` — against any past entry.
 
@@ -28,13 +28,14 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - A cat coach with a voice: context-picked one-liners appended after the numbers, never replacing them — and a memory of your targets, latest weight, and the last 30 minutes of conversation.
 - Daily "what should I eat?" answers from your *remaining* budget; a weekly report card — deterministic stats + LLM commentary that never restates them — with a full page and history in the MINI app, pushed every Monday for premium.
 - Streaks and achievements pay out credits and unlock a collectible sticker wall: unlocked stickers animate when tapped, locked ones hide behind a silhouette and a "?".
+- Invite a friend without leaving the chat: share a card, they tap through to the MINI app, and both sides earn credits — paid out when the new user logs their first entry, capped monthly, with a limited sticker for bringing three.
 
 **Built like a product.**
 - The MINI app covers what chat is bad at — dashboard, editable history, trends, training-plan editor, and a search box over the food and drink catalogs where a drink's size, sweetness and toppings are dialed in by tapping — bilingual, same LINE identity.
 - Cost guardrails on every LLM and vision call: earned credits, confirm-before-spend, every movement ledgered.
 - A paid tier you can actually buy: pick a month / season / year card in the MINI app, pay on a hosted checkout (no card data on my infrastructure), and access is extended by a signature-verified callback that is idempotent on the order number and stacks onto whatever time is left. Expiry reminders are pushed before it lapses.
 - The free tier is a defined product, not an unbounded one: text logging, saved foods and training plans have published limits; voice, photo recognition and the coaching features are what the pass unlocks. Over-quota never blocks a recording the catalog can already resolve.
-- A public storefront on a self-owned domain: a hand-written static marketing site (same design tokens as the app, zero build step) carries the product, pricing, terms and refund pages a payment review requires, and every endpoint — app, API, webhook, site — lives on `fitneko.app` subdomains with the provider URLs kept alive as a rollback path.
+- A public storefront on a self-owned domain: a hand-written static marketing site (same design tokens as the app, zero build step) carries the product, pricing, terms and refund pages a payment review requires — fully bilingual on separate URLs, readable with JavaScript off, and held to a contract test that fails the build when the two languages drift. Every endpoint — app, API, webhook, site — lives on `fitneko.app` subdomains with the provider URLs kept alive as a rollback path.
 
 ## System at a glance
 
@@ -42,6 +43,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
     LINE[LINE message<br/>text · photo · voice] --> IN[Async intake<br/>ack in ms → queue → worker]
+    LINE -. photo .-> ASK["Ask what the photo is for<br/>meal · label · menu"]
+    ASK -- "one tap: charge, then route" --> IN
     IN --> RP
 
     subgraph FUNNEL [Parsing funnel — cheapest layer wins]
@@ -57,11 +60,11 @@ flowchart TD
     LIFF -- "logging re-enters the same estimator" --> SVC
 ```
 
-<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Photos go through Vision and voice through Whisper into the same funnel; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. The free-tier quota check sits *between* layers 2 and 3 — an over-quota free user still logs anything the catalog already knows, and only genuinely new input asks them to upgrade. Buying a pass leaves for a hosted checkout and comes back as a signed server-to-server callback that extends access in one transaction; orders and usage counters live in the same database. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Voice goes through Whisper into the same funnel; a photo first parks unqueued and unbilled until one Quick Reply tap picks its intent, which then selects that intent's own vision prompt, schema and reasoning budget; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. The free-tier quota check sits *between* layers 2 and 3 — an over-quota free user still logs anything the catalog already knows, and only genuinely new input asks them to upgrade. Buying a pass leaves for a hosted checkout and comes back as a signed server-to-server callback that extends access in one transaction; orders and usage counters live in the same database. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~33.6k LOC application Go · ~12.7k LOC TypeScript/React · ~41.6k LOC Go tests (205 files) · 49 migrations · 887 commits
+**Scale:** ~36.2k LOC application Go · ~13.7k LOC TypeScript/React · ~48.4k LOC Go tests (218 files) · 51 migrations · 1,014 commits
 
 ## Deep dives
 
