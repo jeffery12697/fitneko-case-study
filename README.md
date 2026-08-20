@@ -34,7 +34,8 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - The MINI app covers what chat is bad at — dashboard, editable history, trends, training-plan editor, and a search box over the food and drink catalogs where a drink's size, sweetness and toppings are dialed in by tapping — bilingual, same LINE identity.
 - Cost guardrails on every LLM and vision call: earned credits, confirm-before-spend, every movement ledgered.
 - A paid tier you can actually buy: pick a month / season / year card in the MINI app, pay on a hosted checkout (no card data on my infrastructure), and access is extended by a signature-verified callback that is idempotent on the order number and stacks onto whatever time is left. Expiry reminders are pushed before it lapses.
-- The free tier is a defined product, not an unbounded one: text logging, saved foods and training plans have published limits; voice, photo recognition and the coaching features are what the pass unlocks. Over-quota never blocks a recording the catalog can already resolve.
+- The free tier is a defined product, not an unbounded one: text logging, saved foods and training plans have published limits; voice, photo recognition and the coaching features are what the pass unlocks, and history lookback is windowed to the last 30 days. Over-quota never blocks a recording the catalog can already resolve, and nothing is ever deleted to enforce the window — upgrading reveals it all instantly.
+- Leaving is a supported path: account deletion is self-service in the app behind a typed confirmation, executed as one transaction whose scope is declared by the schema rather than by a checklist — content cascades, payment records stay de-identified because the law requires them, cost accounting survives as anonymous numbers. A full export of everything the database holds is available on request and never tiered. A hash-only tombstone keeps delete-and-rejoin from re-farming one-time rewards without retaining anything else about the account that left.
 - A public storefront on a self-owned domain: a hand-written static marketing site (same design tokens as the app, zero build step) carries the product, pricing, terms and refund pages a payment review requires — fully bilingual on separate URLs, readable with JavaScript off, and held to a contract test that fails the build when the two languages drift. Every endpoint — app, API, webhook, site — lives on `fitneko.app` subdomains with the provider URLs kept alive as a rollback path.
 
 ## System at a glance
@@ -60,15 +61,15 @@ flowchart TD
     LIFF -- "logging re-enters the same estimator" --> SVC
 ```
 
-<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Voice goes through Whisper into the same funnel; a photo first parks unqueued and unbilled until one Quick Reply tap picks its intent, which then selects that intent's own vision prompt, schema and reasoning budget; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. The free-tier quota check sits *between* layers 2 and 3 — an over-quota free user still logs anything the catalog already knows, and only genuinely new input asks them to upgrade. Buying a pass leaves for a hosted checkout and comes back as a signed server-to-server callback that extends access in one transaction; orders and usage counters live in the same database. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. Voice goes through Whisper into the same funnel; a photo first parks unqueued and unbilled until one Quick Reply tap picks its intent, which then selects that intent's own vision prompt, schema and reasoning budget; a Monday scheduler feeds the same queue for weekly-report pushes; multi-turn clarifications park in DynamoDB with a TTL. The free-tier quota check sits *between* layers 2 and 3 — an over-quota free user still logs anything the catalog already knows, and only genuinely new input asks them to upgrade. Free-tier reads are clamped to a history window in the API layer, so every lock the app draws is reporting a server decision rather than making one. Buying a pass leaves for a hosted checkout and comes back as a signed server-to-server callback that extends access in one transaction; orders and usage counters live in the same database. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~36.2k LOC application Go · ~13.7k LOC TypeScript/React · ~48.4k LOC Go tests (218 files) · 51 migrations · 1,014 commits
+**Scale:** ~37.0k LOC application Go · ~15.7k LOC TypeScript/React · ~50.9k LOC Go tests (225 files) · 54 migrations · 1,101 commits
 
 ## Deep dives
 
-The interesting engineering lives in eight decisions:
+The interesting engineering lives in nine decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -80,6 +81,7 @@ The interesting engineering lives in eight decisions:
 | 6 | [History is fact, a plan is a template](deep-dives/06-history-vs-template.md) | An autosave was silently erasing training history; the fix was classifying every row as fact or template. |
 | 7 | [The cheapest LLM call is the one you never make](deep-dives/07-known-food-passthrough.md) | Known foods resolve before the model at zero cost, gated by a whitelist so a mis-read falls back instead of logging wrong data. |
 | 8 | [The payment callback is a protocol, not a notification](deep-dives/08-payment-callback-protocol.md) | My HTTP response tells the provider whether to retry — so a permanent failure is acknowledged with success, and idempotency lives in the database, not in an `if`. |
+| 9 | [Deletion has to defend against the person it just forgot](deep-dives/09-deletion-rights-vs-abuse.md) | Erasure destroys the evidence a defence would need, so the flow and the anti-farming mechanism are one design — and the coarser anti-abuse memory is the more private one. |
 
 ## Engineering practices
 

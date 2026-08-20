@@ -1,0 +1,51 @@
+# 2026-08 — Phase 26: deletion as a foreign-key graph, and the export button I didn't build
+
+*Three features that sound like a compliance checkbox: delete your account, get a copy of your data, and see less history on the free tier. What they actually are: a schema question (what may outlive the person?), a product question (is a data right a feature?), and an arithmetic question I got wrong in the spec and only found by using it.*
+
+## The problem
+
+Taking payments means holding personal data on identifiable people, so "delete everything about me" stops being a nice-to-have. But the interesting part isn't the button — it's that a real deletion has to answer a question for every table in the database: *does this row describe the person, or does it merely mention them?* A meal log describes them. A payment record mentions them, and tax law says it stays. A row in the LLM cost table mentions them and is worth keeping as an anonymous number.
+
+The second half of the phase was the free/paid split. Everything I'd gated so far was a *cost* — vision calls, LLM parses, the weekly report — so the gate was always "you've used your quota." A history window is the first gate on something that costs nothing to serve, which makes it the first one that is purely a product decision rather than a bill.
+
+## Decisions
+
+**The export tool ships with no way for a user to reach it.** There is no button, no download link, no endpoint — just an operator CLI that writes one JSON file for one account. Requests come in by email to a published address and I run it by hand. An export is a data *right*, not a product feature: it doesn't need to be self-serve, it must not be tiered (free and paid both get everything the database holds), and every self-serve version I sketched added an authenticated endpoint whose whole job is to emit a complete dossier on a person — an attack surface with no product upside. The cost is honest: it doesn't scale. At my current volume it's an email.
+
+**Deletion is expressed as a foreign-key graph, not as a list of `DELETE` statements.** The service does one thing inside one transaction — `DELETE FROM users WHERE id = $1` — and the schema decides what that means for every other table. User content cascades. Rows that must outlive the person are `ON DELETE SET NULL`, so they survive de-identified:
+
+| Table | On deletion | Why it isn't just deleted |
+|---|---|---|
+| meals, workouts, weights, conversations, achievements, memories, plans… | cascade | describes the person |
+| `orders` | `user_id → NULL` | payment records are legally retained; the amount and provider reference stay, the identity doesn't |
+| `llm_usage` | `user_id → NULL` | cost accounting is worth keeping as an anonymous number |
+| `invites` | both sides `→ NULL`, row kept | see below — the row is also an accounting record |
+
+The alternative — an ordered list of statements in Go — is what I'd normally reach for. The FK version can't drift out of sync with itself: you cannot add a table referencing `users` without declaring what deletion means for it, whereas a Go function is exactly what a future feature forgets to update. The trade-off is that the schema now carries policy, and a wrong declaration doesn't fail loudly — it either blocks deletion entirely or leaves an orphan. Both happened, which is the next two decisions.
+
+**The append-only credit ledger had to become deletable, and that's a narrower concession than it sounds.** A trigger written several phases earlier rejected both `UPDATE` and `DELETE` on the credit-transaction table, which meant account deletion was impossible — not awkward, impossible, and in production, not just in a test. The choice was to keep the ledger intact and keep the person's rows with it, or to narrow the trigger. I narrowed it to `UPDATE` only and let the rows cascade. That gives up the guarantee that ledger rows live forever and keeps the one that actually motivated the trigger: no code path can silently rewrite a past balance change. The currency being ledgered is an in-app, earn-only token — the financial record of record is `orders`, which is retained. Had the trigger been protecting money, the answer would have to be different.
+
+**The anti-abuse memory is one bit, and coarse on purpose.** Delete-and-rejoin is an obvious way to farm one-time rewards, so deletion writes a tombstone — a hash of the LINE user id, nothing else — and three payout paths check it: the starter grant, achievement rewards, and accepting an invite code. A returning user gets a genuinely fresh account, unlocks achievements normally, watches the sticker wall light up, and earns zero. The fair-looking alternative is to remember *which* rewards were already paid, so unearned ones still pay out. I rejected it on privacy grounds rather than effort: a finer-grained anti-abuse record means retaining more about the specific person who just asked to be forgotten. Deletion is rare; the coarse version is simpler *and* holds less. The unfairness is real, so it's stated on the confirmation screen rather than hidden.
+
+**The window is enforced by the API and only *performed* by the frontend.** Every read path clamps to the window server-side and returns an explicit signal — how many days are visible, where the timeline was truncated, how many older weekly reports were withheld — and the client draws locks from that. Locked controls stay tappable, because a disabled control with no feedback reads as broken; tapping opens one upgrade sheet, the same one everywhere. The subtlety that took two review rounds: a `403` from an out-of-window request is an *answer*, not a failure. Treating it as retryable produced an unbounded refetch loop, and treating "I don't know the window yet" as "there is no window" flashed real history at free users before hiding it again.
+
+## What the process caught
+
+**The window is 30 days, not the 21 I specified — and I only found out by using it.** 21 was defensible on paper: three weeks covers "recent," and last month's trend becomes a reason to upgrade. It was wrong in the product because the trends page quantizes to 7 / 30 / 90-day chips. A free user entitled to 21 days could therefore only ever see 7, while the three other surfaces showed all 21 — the entitlement was real and the UI silently rounded most of it away. 21 also happens to be the one value in that neighborhood that collapses the weekly chart's four-week floor to three. Moving to 30 aligned all four surfaces and cost nothing.
+
+The number then turned out to be scattered across seven places no compiler checks: a Terraform default, two entries in the app's i18n dictionary, and four static pages on the marketing site (pricing and terms, in both languages). It's now one Go constant plus a test that reads all seven carriers and, on mismatch, names the file, quotes what it found, and states what it expected.
+
+**The hole that only a whole-branch review could see.** The invite row was set to cascade from the invited person's side, which looks obviously right: their invite, their data, delete it. But that row is doing two jobs — it records a relationship *and* it is the accounting entry the inviter's monthly reward cap is derived from. So an invitee deleting their account silently refunded the inviter's cap, making the monthly limit unbounded for anyone with a supply of LINE accounts. No per-task review could catch it, because every reviewer looking at that table reasoned about the invitee's half of the relationship. It took a review of the completed branch, and the fix was a fourth migration.
+
+**The privacy tool leaked a third party's identifier.** The export serialized the user row wholesale minus the primary key, which quietly included the UUID of whoever invited them. In the tool whose entire purpose is handing someone their own data. The test didn't catch it because the fixture account had never been invited by anyone — the column was always `NULL` in the only case under test.
+
+**A network error rendered as a paywall.** The timeline's lock row appeared both when the window truncated the list and when the fetch failed, so a subway tunnel produced a fake upgrade prompt with a live link to the purchase page.
+
+The uncomfortable pattern across all of it: of roughly twenty review findings over 24 tasks, essentially none were implementation mistakes. They were defects in my plan, collateral damage from the migrations, and twice a gap that no per-task review could see — because the plan split the four locked surfaces into four parallel tasks and never included a task that reconciled them against each other.
+
+Status: merged, deployed to the development environment, and the seven-step attended walkthrough is *executed* this time — including the one step only a human on a real device can do, checking that the closed confirmation sheets are genuinely unreachable by keyboard and screen reader. Production deployment is the remaining step.
+
+## Hindsight, honestly
+
+- **Deletion has two obligations that pull in opposite directions, and you have to design for both at once.** One is the user's right to their own data: when someone says erase me, it has to actually be erased, not archived somewhere convenient. The other is that erasure is a state transition an attacker can drive on purpose — delete, rejoin, collect the new-user rewards again, repeat. Satisfy only the first and you've built a reward faucet with a reset button; satisfy only the second and you're keeping records on people who asked you to stop. Neither obligation is optional, so the honest lesson is that the *flow* and the *anti-farming mechanism* are one design, not a feature plus a follow-up patch.
+- **That's why both went into the spec before any code.** The confirmation flow and the tombstone were written down together — including which rewards a returning account can never earn again, and the fact that this is stated to the user before they confirm rather than discovered afterward. Had the anti-abuse half been deferred to "we'll harden it later," the deletion path would have shipped as the cheapest way in the product to farm one-time rewards, and retrofitting a defence onto a flow whose whole purpose is to destroy evidence is a much worse problem than specifying it up front.
