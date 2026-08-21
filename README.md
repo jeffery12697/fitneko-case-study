@@ -37,6 +37,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - The free tier is a defined product: published limits, a 30-day history window (nothing deleted — upgrading reveals it all), and over-quota never blocks what the catalog can already resolve.
 - Leaving is a supported path: self-service account deletion (payments retained de-identified), full data export on request, and a hash-only tombstone so delete-and-rejoin can't re-farm one-time rewards.
 - A bilingual, zero-build-step marketing site on the self-owned `fitneko.app` domain — product, pricing, terms and refund pages, held by a contract test that fails when the two languages drift.
+- Operations fit a solo operator: a daily LINE digest (actives, LLM spend, orders, top usage) pushes itself; an owner-only dashboard handles drill-down and the one kill switch — blocking an abusive account, silently.
 
 ## System at a glance
 
@@ -65,7 +66,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~37.0k LOC application Go · ~15.7k LOC TypeScript/React · ~50.9k LOC Go tests (225 files) · 54 migrations · 1,101 commits
+**Scale:** ~39.0k LOC application Go · ~18.2k LOC TypeScript/React · ~53.4k LOC Go tests (234 files) · 56 migrations · 1,169 commits
 
 ## Deep dives
 

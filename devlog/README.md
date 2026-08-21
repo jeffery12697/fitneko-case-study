@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Phase 27: an admin panel that is mostly a push notification](2026-08-phase-27-admin.md) | Phase 27 (ops digest, owner dashboard, block switch) |
 | 2026-08 | [Phase 26: deletion as a foreign-key graph, and the export button I didn't build](2026-08-phase-26-account-data.md) | Phase 26 (account deletion, operator export, free-tier history window) |
 | 2026-08 | [Asking the user what the photo is for](2026-08-image-intent-routing.md) | Image intent routing (Quick Reply selection, per-intent vision profiles) |
 | 2026-08 | [Phase 24: an invite code that isn't worth abusing](2026-08-phase-24-invite.md) | Phase 24 (invite flow, referral rewards, credit-economy knobs) |
