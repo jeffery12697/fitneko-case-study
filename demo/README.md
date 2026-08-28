@@ -13,7 +13,7 @@ Every caption names the engineering behind the pixels, with links into the [deep
 ## Chat
 
 - [ ] **Text food logging + daily total** — 「早餐吃了一個鮭魚御飯團跟一杯大杯拿鐵」 in, structured calories/macros + running total out. `chat/01-food-logging.png`
-- [ ] **Targeted correction** — 「把早餐的拿鐵改成中杯」 edits the entry it names, not just the last one. Same frame as the log it corrects. `chat/02-correction.png`
+- [ ] **Targeted correction, in the other language** — `change the breakfast latte to a medium` edits the entry it names, and the bot replies in kind — one frame showing a Chinese log corrected in English. `chat/02-correction.png`
 - [ ] **The photo question** — send a photo and the bot asks what it's for (meal / nutrition label / menu) before spending anything → [devlog: image intent routing](../devlog/2026-08-image-intent-routing.md). `chat/03-image-intent.png`
 - [ ] **Label OCR → "how much did you eat?" → scaled log** — per-serving numbers read from the label, a clarifying question, then a log scaled to the answer. Multi-turn state in a stateless webhook world → [deep dive #4](../deep-dives/04-clarification-flows.md). `chat/04-label-scaled.png`
 - [ ] **Hand-shaken drink, decomposed** — 「50嵐 珍珠奶茶 中杯 微糖 去冰」 costed deterministically from brand × base × sugar × ice × toppings, zero LLM tokens → [devlog: the drink that isn't one number](../devlog/2026-07-phase-20c-bubble-tea-catalog.md). `chat/05-bubble-tea.png`
