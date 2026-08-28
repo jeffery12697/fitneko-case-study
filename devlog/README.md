@@ -6,6 +6,10 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-08 | [Alerts that arrive where the operator already lives](2026-08-monitoring-alerts.md) | Delivery: monitoring alarms + LINE alert push |
+| 2026-08 | [Consent: the gate that had to exist before the first meal](2026-08-consent-flow.md) | Consent flow (bot + app dual gate, versioned evidence trail) |
+| 2026-08 | [Abuse protection: price the worst user before they show up](2026-08-abuse-protection.md) | Abuse protection (rate guardrail, LLM quotas, digest anomaly rules) |
+| 2026-08 | [Phase 23 closeout: selling streak repairs without selling streaks](2026-08-phase-23-streak-repair.md) | Phase 23 closeout (streak repair, streak calendar) |
 | 2026-08 | [Phase 27: an admin panel that is mostly a push notification](2026-08-phase-27-admin.md) | Phase 27 (ops digest, owner dashboard, block switch) |
 | 2026-08 | [Phase 26: deletion as a foreign-key graph, and the export button I didn't build](2026-08-phase-26-account-data.md) | Phase 26 (account deletion, operator export, free-tier history window) |
 | 2026-08 | [Asking the user what the photo is for](2026-08-image-intent-routing.md) | Image intent routing (Quick Reply selection, per-intent vision profiles) |

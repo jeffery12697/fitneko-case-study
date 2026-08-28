@@ -27,25 +27,28 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set).
 - A cat coach that remembers your targets, latest weight and recent conversation — one-liners appended after the numbers, never replacing them.
 - Daily "what should I eat?" from your *remaining* budget; a weekly report card of deterministic stats + LLM commentary that never restates them.
-- Streaks and achievements pay out credits and unlock a collectible sticker wall.
+- Streaks and achievements pay out credits and unlock a collectible sticker wall. A broken streak can be bought back with credits — repaired days are visibly marked on the streak calendar, and achievements only ever count real ones.
 - Invite a friend from the chat; both sides earn credits when the new user logs their first entry — capped monthly, so a leaked code isn't worth farming.
 
 **Built like a product.**
 - The MINI app covers what chat is bad at: dashboard, editable history, trends, plan editor, catalog search — bilingual, same LINE identity.
 - Cost guardrails on every LLM and vision call: earned credits, confirm-before-spend, every movement ledgered.
+- Abuse has a price list: a per-user rate guardrail on the webhook, daily LLM-call quotas (a fair-use ceiling even for the paid tier, written into the terms), and behavioral anomaly rules surfaced in the daily ops digest.
+- Consent is collected before data is: both front doors gate on a versioned, append-only consent record — unconsented messages are answered with the consent card and never processed, and a policy change re-asks everyone automatically.
 - A paid tier you can actually buy: month / season / year cards on a hosted checkout, granted by a signature-verified, idempotent callback that stacks onto remaining time.
 - The free tier is a defined product: published limits, a 30-day history window (nothing deleted — upgrading reveals it all), and over-quota never blocks what the catalog can already resolve.
 - Leaving is a supported path: self-service account deletion (payments retained de-identified), full data export on request, and a hash-only tombstone so delete-and-rejoin can't re-farm one-time rewards.
 - A bilingual, zero-build-step marketing site on the self-owned `fitneko.app` domain — product, pricing, terms and refund pages, held by a contract test that fails when the two languages drift.
-- Operations fit a solo operator: a daily LINE digest (actives, LLM spend, orders, top usage) pushes itself; an owner-only dashboard handles drill-down and the one kill switch — blocking an abusive account, silently.
+- Operations fit a solo operator: a daily LINE digest (actives, LLM spend, orders, top usage) pushes itself; five low-threshold alarms push failures into the same channel with email as the independent fallback; an owner-only dashboard handles drill-down and the one kill switch — blocking an abusive account, silently.
 
 ## System at a glance
 
 ```mermaid
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
-    LINE[LINE message<br/>text · photo · voice] --> IN[Async intake<br/>ack in ms → queue → worker]
-    LINE -. photo .-> ASK["Ask what the photo is for<br/>meal · label · menu"]
+    LINE[LINE message<br/>text · photo · voice] --> GATE[Webhook gates<br/>signature · block · rate · consent]
+    GATE --> IN[Async intake<br/>ack in ms → queue → worker]
+    GATE -. photo .-> ASK["Ask what the photo is for<br/>meal · label · menu"]
     ASK -- "one tap" --> IN
     IN --> RP
 
@@ -66,11 +69,11 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~39.0k LOC application Go · ~18.2k LOC TypeScript/React · ~53.4k LOC Go tests (234 files) · 56 migrations · 1,169 commits
+**Scale:** ~40.8k LOC application Go · ~19.8k LOC TypeScript/React · ~58.1k LOC Go tests (246 files) · 63 migrations · 1,314 commits
 
 ## Deep dives
 
-The interesting engineering lives in nine decisions:
+The interesting engineering lives in ten decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -83,6 +86,7 @@ The interesting engineering lives in nine decisions:
 | 7 | [The cheapest LLM call is the one you never make](deep-dives/07-known-food-passthrough.md) | Known foods resolve before the model at zero cost, gated by a whitelist so a mis-read falls back instead of logging wrong data. |
 | 8 | [The payment callback is a protocol, not a notification](deep-dives/08-payment-callback-protocol.md) | My HTTP response tells the provider whether to retry — so a permanent failure is acknowledged with success, and idempotency lives in the database, not in an `if`. |
 | 9 | [Deletion has to defend against the person it just forgot](deep-dives/09-deletion-rights-vs-abuse.md) | Erasure destroys the evidence a defence would need, so the deletion flow and the anti-farming tombstone are one design. |
+| 10 | [Consent is a gate, not a feature](deep-dives/10-consent-as-a-gate.md) | One consent record has to gate two front doors, the whole API, and jobs with no user present — so it's a middleware and an ordering constraint, not a screen. |
 
 ## Engineering practices
 
