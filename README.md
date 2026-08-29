@@ -2,6 +2,8 @@
 
 FitNeko is a LINE-first AI fitness coach, built solo: chat naturally — Chinese, English, or photos — to log meals and workouts; a React MINI app inside LINE handles the review-heavy rest.
 
+**Live:** [fitneko.app](https://fitneko.app) — the bot, the MINI app, and the marketing site are all in production.
+
 > 🚧 **Living case study of an actively developed product.** The source is private; this repo documents the architecture and the decisions. Details live in the [devlog](devlog/) and [deep dives](#deep-dives).
 
 ```
@@ -9,6 +11,19 @@ User: 早餐吃了一個鮭魚御飯團跟大杯拿鐵
 Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kcal)
       今日累計 400 / 1800 kcal，蛋白質 18 / 120 g
 ```
+
+## See it
+
+<table>
+<tr>
+<td width="34%"><img src="demo/hero.gif" alt="Log a meal in chat, open the MINI app, the calorie ring reflects it"></td>
+<td width="22%"><img src="demo/liff/02-streak-calendar.jpg" alt="Streak calendar with a credit-repaired day"></td>
+<td width="22%"><img src="demo/chat/05-bubble-tea.jpg" alt="Hand-shaken drink resolved deterministically"></td>
+<td width="22%"><img src="demo/liff/03-sticker-wall.jpg" alt="Achievement sticker wall"></td>
+</tr>
+</table>
+
+<sub>Left: log a meal in chat, open the MINI app, the ring already knows — one LINE identity, two surfaces. More captures, each captioned with the engineering behind it, in **[demo/](demo/)**.</sub>
 
 ## What it does
 
