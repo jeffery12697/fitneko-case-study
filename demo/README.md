@@ -30,6 +30,15 @@ Every caption names the engineering behind the pixels, with links into the [deep
 | <img src="liff/03-sticker-wall.jpg" width="380"> | **The sticker wall.** Achievements as collectibles — unlocked stickers in full art, locked ones as silhouettes with their condition stated. |
 | <img src="liff/04-trends.jpg" width="380"> | **Trends, with the free tier's edge visible.** Weight and intake over 30 days, weight entry on the same screen — and the 90-day tab wears a lock, because history windowing is a server decision the UI merely reports → [devlog: phase 26](../devlog/2026-08-phase-26-account-data.md). |
 
+## Bilingual
+
+Language is a profile setting: flip it to English and the whole product follows.
+
+| | |
+|---|---|
+| <img src="chat/07-english-log.jpg" width="380"> | **Same pipeline, other language.** `I had a salmon sandwich and a large latte for breakfast` — the parser, the reply card and the coach's follow-up all speak the profile's language. |
+| <img src="liff/05-dashboard-en.jpg" width="380"> | **The MINI app follows too.** The dashboard in English — the same over-target honesty, translated. |
+
 ## Capture notes
 
 - Stills are device screenshots (chat in dark mode, MINI app in its own light theme); the hero clip is a screen recording cut to ~16s, with the send-to-reply wait time-lapsed 5× and the greeting's display name pixelated at the pixel level (downscale → upscale → blur, unrecoverable).
