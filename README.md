@@ -14,54 +14,48 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 
 ## See it
 
-<table>
-<tr>
-<td width="34%"><img src="demo/hero.gif" alt="Log a meal in chat, open the MINI app, the calorie ring reflects it"></td>
-<td width="22%"><img src="demo/liff/02-streak-calendar.jpg" alt="Streak calendar with a credit-repaired day"></td>
-<td width="22%"><img src="demo/chat/05-bubble-tea.jpg" alt="Hand-shaken drink resolved deterministically"></td>
-<td width="22%"><img src="demo/liff/03-sticker-wall.jpg" alt="Achievement sticker wall"></td>
-</tr>
-</table>
+<p align="center">
+  <img src="demo/chat/00-log-card.jpg" width="24%" alt="A meal logged in chat: structured card with calories, macros and daily total">
+  <img src="demo/liff/01-dashboard.jpg" width="24%" alt="MINI app dashboard: calorie ring, macro bars, coach banner">
+  <img src="demo/liff/02-streak-calendar.jpg" width="24%" alt="Streak calendar with one credit-repaired day">
+  <img src="demo/liff/03-sticker-wall.jpg" width="24%" alt="Achievement sticker wall">
+</p>
 
-<sub>Left: log a meal in chat, open the MINI app, the ring already knows — one LINE identity, two surfaces. More captures, each captioned with the engineering behind it, in **[demo/](demo/)**.</sub>
+<sub>Log it in chat; review it in the MINI app — one LINE identity across both. More captures, each captioned with the engineering behind it, plus a 16-second clip of the whole loop, in **[demo/](demo/)**.</sub>
 
 ## What it does
 
 **Log by talking.**
 - Free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
-- Send a photo and the bot asks what it's for — meal, nutrition label, or menu — then runs that intent's own vision profile. Nothing is charged until you tap.
-- Voice notes are transcribed (Whisper) into the same parser as text.
-- Plain-language corrections against any past entry: `把早餐的蛋改成兩顆`, `delete the latte from lunch`.
+- Send a photo and the bot asks what it's for — meal, nutrition label, or menu — before spending anything.
+- Voice notes feed the same parser; corrections are plain language — 「把早餐的蛋改成兩顆」 edits the entry it names.
 
 **Know the food.**
-- A 2,500+ item Taiwan food catalog with official nutrition; an exact hit always beats an LLM guess.
-- Hand-shaken drinks decomposed — brand × base × sugar × toppings × cup size — costed deterministically from six tea chains' official figures.
-- Known foods, saved foods and past corrections resolve with **zero LLM tokens**; the model is spent only on genuinely new input.
+- A 2,500+ item Taiwan food catalog with official nutrition — an exact hit always beats an LLM guess.
+- Hand-shaken drinks costed deterministically from six chains' official figures: brand × base × sugar × toppings × cup size.
+- Known and saved foods resolve with **zero LLM tokens**; the model only sees genuinely new input.
 
 **Coach, not just count.**
 - TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set).
-- A cat coach that remembers your targets, latest weight and recent conversation — one-liners appended after the numbers, never replacing them.
-- Daily "what should I eat?" from your *remaining* budget; a weekly report card of deterministic stats + LLM commentary that never restates them.
-- Streaks and achievements pay out credits and unlock a collectible sticker wall. A broken streak can be bought back with credits — repaired days are visibly marked on the streak calendar, and achievements only ever count real ones.
-- Invite a friend from the chat; both sides earn credits when the new user logs their first entry — capped monthly, so a leaked code isn't worth farming.
+- A cat coach that remembers your targets and recent conversation — one-liners after the numbers, never instead of them.
+- Daily "what should I eat?" from the *remaining* budget; a weekly report card of stats + LLM commentary.
+- Streaks pay out credits; a broken streak is repairable with credits — visibly marked, never counted by achievements.
+- Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming.
 
 **Built like a product.**
-- The MINI app covers what chat is bad at: dashboard, editable history, trends, plan editor, catalog search — bilingual, same LINE identity.
-- Cost guardrails on every LLM and vision call: earned credits, confirm-before-spend, every movement ledgered.
-- Abuse has a price list: a per-user rate guardrail on the webhook, daily LLM-call quotas (a fair-use ceiling even for the paid tier, written into the terms), and behavioral anomaly rules surfaced in the daily ops digest.
-- Consent is collected before data is: both front doors gate on a versioned, append-only consent record — unconsented messages are answered with the consent card and never processed, and a policy change re-asks everyone automatically.
-- A paid tier you can actually buy: month / season / year cards on a hosted checkout, granted by a signature-verified, idempotent callback that stacks onto remaining time.
-- The free tier is a defined product: published limits, a 30-day history window (nothing deleted — upgrading reveals it all), and over-quota never blocks what the catalog can already resolve.
-- Leaving is a supported path: self-service account deletion (payments retained de-identified), full data export on request, and a hash-only tombstone so delete-and-rejoin can't re-farm one-time rewards.
-- A bilingual, zero-build-step marketing site on the self-owned `fitneko.app` domain — product, pricing, terms and refund pages, held by a contract test that fails when the two languages drift.
-- Operations fit a solo operator: a daily LINE digest (actives, LLM spend, orders, top usage) pushes itself; five low-threshold alarms push failures into the same channel with email as the independent fallback; an owner-only dashboard handles drill-down and the one kill switch — blocking an abusive account, silently.
+- The MINI app covers what chat is bad at: dashboard, editable history, trends, plans, search — bilingual.
+- Every LLM and vision call is credit-gated, confirmed before spending, and ledgered.
+- Abuse is priced out: a webhook rate guardrail, daily LLM quotas (a fair-use ceiling even when paid), anomaly rules in the daily ops digest.
+- Consent gates both front doors before any data is collected; deletion, export and an anti-refarm tombstone make leaving a supported path.
+- A paid tier on a hosted checkout, granted by a signature-verified idempotent callback; a free tier with published limits and a 30-day history window.
+- A bilingual zero-build marketing site on `fitneko.app`; operations fit one person — a daily LINE digest, alarms pushed into the same channel, one kill switch.
 
 ## System at a glance
 
 ```mermaid
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
-    LINE[LINE message<br/>text · photo · voice] --> GATE[Webhook gates<br/>signature · block · rate · consent]
+    LINE[LINE message<br/>text · photo · voice] --> GATE[Gates<br/>auth · abuse · consent]
     GATE --> IN[Async intake<br/>ack in ms → queue → worker]
     GATE -. photo .-> ASK["Ask what the photo is for<br/>meal · label · menu"]
     ASK -- "one tap" --> IN
@@ -80,7 +74,7 @@ flowchart TD
     LIFF -- "logs re-enter the funnel" --> SVC
 ```
 
-<sub>Whichever layer resolves first hands off to the service; only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog already knows — and history reads are clamped to the free-tier window at the API, so every lock the app draws reports a server decision. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first wins — only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog already knows. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
