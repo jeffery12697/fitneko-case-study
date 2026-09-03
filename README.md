@@ -31,16 +31,16 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Voice notes feed the same parser; corrections are plain language — 「把早餐的蛋改成兩顆」 edits the entry it names.
 
 **Know the food.**
-- A 2,500+ item Taiwan food catalog with official nutrition — an exact hit always beats an LLM guess.
-- Hand-shaken drinks costed deterministically from six chains' official figures: brand × base × sugar × toppings × cup size.
+- A 3,200+ item Taiwan food catalog — government nutrition data plus major chains' official figures — where an exact hit always beats an LLM guess.
+- Hand-shaken drinks costed deterministically from eight chains' official figures: brand × base × sugar × toppings × cup size.
 - Known and saved foods resolve with **zero LLM tokens**; the model only sees genuinely new input.
 
 **Coach, not just count.**
-- TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set).
+- TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set), and six curated training programs applied in one tap.
 - A cat coach that remembers your targets and recent conversation — one-liners after the numbers, never instead of them.
 - Daily "what should I eat?" from the *remaining* budget; a weekly report card of stats + LLM commentary.
 - Streaks pay out credits; a broken streak is repairable with credits — visibly marked, never counted by achievements.
-- Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming.
+- Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming; milestone stickers at 3, 5, 10 and 30 friends keep the loop going past the cap.
 
 **Built like a product.**
 - The MINI app covers what chat is bad at: dashboard, editable history, trends, plans, search — bilingual.
@@ -48,7 +48,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Abuse is priced out: a webhook rate guardrail, daily LLM quotas (a fair-use ceiling even when paid), anomaly rules in the daily ops digest.
 - Consent gates both front doors before any data is collected; deletion, export and an anti-refarm tombstone make leaving a supported path.
 - A paid tier on a hosted checkout, granted by a signature-verified idempotent callback; a free tier with published limits and a 30-day history window.
-- A bilingual zero-build marketing site on `fitneko.app`; operations fit one person — a daily LINE digest, alarms pushed into the same channel, one kill switch.
+- A bilingual zero-build marketing site on `fitneko.app`; operations fit one person — a daily LINE digest, alarms pushed into the same channel, one kill switch, and an audited support CLI for refunds, credit adjustments and manual PASS grants.
 
 ## System at a glance
 
@@ -78,7 +78,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~40.8k LOC application Go · ~19.8k LOC TypeScript/React · ~58.1k LOC Go tests (246 files) · 63 migrations · 1,314 commits
+**Scale:** ~41.8k LOC application Go · ~21.2k LOC TypeScript/React · ~60.4k LOC Go tests (255 files) · 64 migrations · 1,425 commits
 
 ## Deep dives
 
