@@ -7,6 +7,8 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 | Date | Entry | Phase |
 |------|-------|-------|
 | 2026-09 | [Invite milestones: a ladder built on the constraint that already existed](2026-09-invite-milestones.md) | Invite milestones (5/10/30 stickers, next-target progress) |
+| 2026-09 | [Six curated programs, zero backend](2026-09-plan-templates.md) | Curated training programs (bundle-resident templates, one-tap apply) |
+| 2026-09 | [The support tool I wished I'd had during the incident](2026-09-adminctl-ops-cli.md) | Ops CLI (user lookup, credit adjust, pass grant/revoke, audit trail) |
 | 2026-08 | [Alerts that arrive where the operator already lives](2026-08-monitoring-alerts.md) | Delivery: monitoring alarms + LINE alert push |
 | 2026-08 | [Consent: the gate that had to exist before the first meal](2026-08-consent-flow.md) | Consent flow (bot + app dual gate, versioned evidence trail) |
 | 2026-08 | [Abuse protection: price the worst user before they show up](2026-08-abuse-protection.md) | Abuse protection (rate guardrail, LLM quotas, digest anomaly rules) |
