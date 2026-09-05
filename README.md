@@ -92,7 +92,7 @@ flowchart TD
 
 ## Deep dives
 
-The interesting engineering lives in ten decisions:
+The interesting engineering lives in eleven decisions:
 
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
@@ -106,6 +106,7 @@ The interesting engineering lives in ten decisions:
 | 8 | [The payment callback is a protocol, not a notification](deep-dives/08-payment-callback-protocol.md) | My HTTP response tells the provider whether to retry — so a permanent failure is acknowledged with success, and idempotency lives in the database, not in an `if`. |
 | 9 | [Deletion has to defend against the person it just forgot](deep-dives/09-deletion-rights-vs-abuse.md) | Erasure destroys the evidence a defence would need, so the deletion flow and the anti-farming tombstone are one design. |
 | 10 | [Consent is a gate, not a feature](deep-dives/10-consent-as-a-gate.md) | One consent record has to gate two front doors, the whole API, and jobs with no user present — so it's a middleware and an ordering constraint, not a screen. |
+| 11 | [The model proposes, the engine decides](deep-dives/11-model-proposes-engine-decides.md) | Hand-written lines and LLM proposals leave through one door with one rule set; the copy pool doubles as the few-shot set, and the eval judges the line the user sees, not the one the model wrote. |
 
 ## Engineering practices
 
