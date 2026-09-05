@@ -6,6 +6,7 @@ FitNeko is developed spec-first: each phase begins with a written spec (numbered
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-09 | [Phase 18c: three cats, one arbiter, and an eval that had to learn what production actually says](2026-09-phase-18c-persona.md) | Phase 18c (persona gears, quiet mode, LLM tone candidates, tone eval) |
 | 2026-09 | [Invite milestones: a ladder built on the constraint that already existed](2026-09-invite-milestones.md) | Invite milestones (5/10/30 stickers, next-target progress) |
 | 2026-09 | [Six curated programs, zero backend](2026-09-plan-templates.md) | Curated training programs (bundle-resident templates, one-tap apply) |
 | 2026-09 | [The support tool I wished I'd had during the incident](2026-09-adminctl-ops-cli.md) | Ops CLI (user lookup, credit adjust, pass grant/revoke, audit trail) |

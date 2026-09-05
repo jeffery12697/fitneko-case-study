@@ -38,6 +38,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 **Coach, not just count.**
 - TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set), and six curated training programs applied in one tap.
 - A cat coach that remembers your targets and recent conversation — one-liners after the numbers, never instead of them.
+- Pick the cat: gentle, coach, or tsundere — switched in chat (「兇一點」) or in settings — plus a numbers-only quiet mode. Hand-written lines and LLM-proposed ones pass through one arbiter with the same rules; a weigh-in or a bad day always gets encouragement, whatever the gear.
 - Daily "what should I eat?" from the *remaining* budget; a weekly report card of stats + LLM commentary.
 - Streaks pay out credits; a broken streak is repairable with credits — visibly marked, never counted by achievements.
 - Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming; milestone stickers at 3, 5, 10 and 30 friends keep the loop going past the cap.
@@ -49,6 +50,14 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Consent gates both front doors before any data is collected; deletion, export and an anti-refarm tombstone make leaving a supported path.
 - A paid tier on a hosted checkout, granted by a signature-verified idempotent callback; a free tier with published limits and a 30-day history window.
 - A bilingual zero-build marketing site on `fitneko.app`; operations fit one person — a daily LINE digest, alarms pushed into the same channel, one kill switch, and an audited support CLI for refunds, credit adjustments and manual PASS grants.
+
+## How I decide
+
+Three rules recur in almost every decision below; the deep dives are mostly these rules meeting a specific problem.
+
+1. **The cheapest layer that can answer, answers.** Intent rules before the catalog, the catalog before the model, a cache before a call. The LLM is the last resort, never the default — that is the cost story and most of the latency story.
+2. **Deterministic first, model second, and the model never gets the final word.** Hand-written pools, whitelists, keyword backstops and hard rules run in code; a model may *propose* — a food, a tone line, a recommendation — but code decides whether the proposal is used.
+3. **Firewalls between what must be right and what may be charming.** Numbers, ledgers and consent are byte-exact and tested as such; personality, advice and commentary are appended after them and can be silenced without changing them.
 
 ## System at a glance
 
@@ -68,17 +77,18 @@ flowchart TD
 
     FUNNEL --> SVC[Diet service]
     SVC --> PG[(PostgreSQL<br/>logs · snapshots · food catalog)]
-    SVC --> REPLY[LINE reply / push]
+    SVC --> TONE["Tone engine<br/>numbers first · one persona line after"]
+    TONE --> REPLY[LINE reply / push]
     REPLY -. cards deep-link .-> LIFF[MINI app<br/>React, inside LINE]
     LIFF -- REST reads --> PG
     LIFF -- "logs re-enter the funnel" --> SVC
 ```
 
-<sub>Whichever layer resolves first wins — only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog already knows. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Whichever layer resolves first wins — only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog already knows. The tone engine is the single door every reply's personality passes through: a hand-written pool for the free paths, an LLM-proposed candidate when the parser ran, one set of safety rules for both. Full detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~41.8k LOC application Go · ~21.2k LOC TypeScript/React · ~60.4k LOC Go tests (255 files) · 64 migrations · 1,425 commits
+**Scale:** ~43.1k LOC application Go · ~21.8k LOC TypeScript/React · ~63.3k LOC Go tests (271 files) · 65 migrations · 1,487 commits
 
 ## Deep dives
 
@@ -99,13 +109,15 @@ The interesting engineering lives in ten decisions:
 
 ## Engineering practices
 
-- **Spec-first phases** — every phase starts from a written spec with numbered requirements and explicit error cases (~26 phases so far).
+- **Spec-first phases** — every phase starts from a written spec with numbered requirements and explicit error cases (~27 phases so far).
+- **A written plan, then a review per task, then a review of the whole branch** — each phase's spec becomes a task-by-task plan with the tests written first; every task is reviewed against its brief before the next starts, and the finished branch is reviewed against the spec. The two layers catch different things — see the plan that [quietly shrank its spec](devlog/2026-07-phase-18b-tone-layer.md), the [stale comments a scoped review found](devlog/2026-09-invite-milestones.md), and the [eval that judged the wrong line](devlog/2026-09-phase-18c-persona.md).
 - **TDD against behavior** — tests assert on replies sent and rows written, never internals; the one-command e2e harness survived the serverless migration unchanged.
 - **CI on every push** — Go + web suites, e2e, Lambda smoke builds, terraform validate, a backup-restore proof; ~3 minutes, zero real credentials.
 - **Checks the tests can't do** — lint, call-path vulnerability scanning and workflow linting gate every merge; dependency updates land weekly, security fixes immediately.
 - **CD with zero stored keys** — every merge auto-deploys dev via GitHub OIDC, pinned to the commit CI passed; prod is a deliberate plan-then-apply.
 - **Migrations as code** — versioned up/down SQL pairs, applied idempotently by the pipeline.
 - **Graceful degradation by default** — LLM retries with backoff, clarification failures re-prompt, unreadable images never fabricate a log.
+- **Model output is eval-gated, not eyeballed** — a live eval runs mine-field scenarios across every persona and judges the line the user would actually see; body, region and brand violations fail the build, softer categories go to human review.
 
 ## Devlog
 
