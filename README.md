@@ -43,13 +43,17 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 - Streaks pay out credits; a broken streak is repairable with credits — visibly marked, never counted by achievements.
 - Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming; milestone stickers at 3, 5, 10 and 30 friends keep the loop going past the cap.
 
-**Built like a product.**
+<details>
+<summary><strong>Built like a product</strong> — payments, abuse limits, consent, deletion, one-person operations (expand)</summary>
+
 - The MINI app covers what chat is bad at: dashboard, editable history, trends, plans, search — bilingual.
 - Every LLM and vision call is credit-gated, confirmed before spending, and ledgered.
 - Abuse is priced out: a webhook rate guardrail, daily LLM quotas (a fair-use ceiling even when paid), anomaly rules in the daily ops digest.
 - Consent gates both front doors before any data is collected; deletion, export and an anti-refarm tombstone make leaving a supported path.
 - A paid tier on a hosted checkout, granted by a signature-verified idempotent callback; a free tier with published limits and a 30-day history window.
 - A bilingual zero-build marketing site on `fitneko.app`; operations fit one person — a daily LINE digest, alarms pushed into the same channel, one kill switch, and an audited support CLI for refunds, credit adjustments and manual PASS grants.
+
+</details>
 
 ## How I decide
 
@@ -91,6 +95,8 @@ flowchart TD
 **Scale:** ~43.1k LOC application Go · ~21.8k LOC TypeScript/React · ~63.3k LOC Go tests (271 files) · 65 migrations · 1,487 commits
 
 ## Deep dives
+
+**Ten minutes?** Read [2](deep-dives/02-deterministic-parsing-before-llm.md), [7](deep-dives/07-known-food-passthrough.md) and [11](deep-dives/11-model-proposes-engine-decides.md) — they are the three rules above meeting the parser, the food catalog and the cat's voice. The rest are here when you want them.
 
 The interesting engineering lives in eleven decisions:
 

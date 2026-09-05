@@ -4,6 +4,18 @@ One entry per completed development phase — what problem the phase solved, the
 
 FitNeko is developed spec-first: each phase begins with a written spec (numbered requirements, explicit error cases) before implementation. These entries are the public distillation of those specs plus hindsight.
 
+## Start here
+
+Five entries where the hindsight section earned its keep:
+
+- [Going live: CI, a blocked front door, and a same-day teardown](2026-07-going-live.md) — the first CI pipeline, an org policy that quietly blocked the webhook, and a deliberate `terraform destroy` once the bot was verified live.
+- [Phase 17f: taking my own advice and deleting the Fargate worker](2026-07-phase-17f-lambda-worker.md) — the previous entry admitted the Fargate worker was partly résumé padding; this one acted on it.
+- [Taking money: a payment loop where the failure modes cost real currency](2026-08-payment-ecpay.md) — every decision is the same decision: zero ways to silently take money without granting access.
+- [Phase 18b: giving the cat a voice without giving it a microphone](2026-07-phase-18b-tone-layer.md) — the plan that quietly shrank its own spec.
+- [Phase 18c: three cats, one arbiter, and an eval that had to learn what production actually says](2026-09-phase-18c-persona.md) — six eval rounds against a stochastic judge.
+
+## All entries
+
 | Date | Entry | Phase |
 |------|-------|-------|
 | 2026-09 | [Phase 18c: three cats, one arbiter, and an eval that had to learn what production actually says](2026-09-phase-18c-persona.md) | Phase 18c (persona gears, quiet mode, LLM tone candidates, tone eval) |
