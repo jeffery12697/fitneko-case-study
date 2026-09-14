@@ -1,10 +1,10 @@
-# Deep dive 1 — Async intake: acknowledge fast, reply later
+# Deep dive 1 · Async intake: acknowledge fast, reply later
 
 ## The problem
 
-A LINE webhook delivers a message and expects a prompt HTTP 200. The work FitNeko needs to do — LLM parsing, nutrition estimation, sometimes downloading and analyzing an image — takes seconds, occasionally tens of seconds with retries. Blocking the webhook on that is a non-starter: LINE retries slow webhooks, retries mean duplicate processing, and one slow LLM call would stall every user behind it.
+A LINE webhook delivers a message and expects a prompt HTTP 200. The work FitNeko needs to do (LLM parsing, nutrition estimation, sometimes downloading and analyzing an image) takes seconds, occasionally tens of seconds with retries. Blocking the webhook on that is a non-starter: LINE retries slow webhooks, retries mean duplicate processing, and one slow LLM call would stall every user behind it.
 
-The complication is that replying on LINE is cheapest via the **reply token** that arrives with the event — but reply tokens are single-use and expire in roughly a minute. So the design has to decouple *receiving* from *replying* while treating the token as a perishable resource.
+The complication is that replying on LINE is cheapest via the reply token that arrives with the event, but reply tokens are single-use and expire in roughly a minute. So the design has to decouple *receiving* from *replying* while treating the token as a perishable resource.
 
 ## The shape of the solution
 
@@ -15,7 +15,7 @@ worker   →  claim job (FOR UPDATE SKIP LOCKED)  →  parse / analyze / persist
          →  reply IF token still inside its 55-second window
 ```
 
-Everything a future step needs — including the reply token and *when it arrived* — is written to PostgreSQL before the webhook returns. There is no in-process queue to lose on restart.
+Everything a future step needs, including the reply token and *when it arrived*, is written to PostgreSQL before the webhook returns. There is no in-process queue to lose on restart.
 
 ## Idempotency at the front door
 
@@ -30,7 +30,7 @@ Redelivery becomes a no-op instead of a duplicate diet log. This one constraint 
 
 ## Claiming work without a queue broker
 
-The worker polls PostgreSQL rather than using a message broker — a deliberate simplicity choice at this scale. Claiming is race-safe via row locking:
+The worker polls PostgreSQL instead of using a message broker, which is the simpler choice at this scale. Claiming is race-safe via row locking:
 
 ```go
 // ClaimNextPending: one transaction —
@@ -38,9 +38,9 @@ The worker polls PostgreSQL rather than using a message broker — a deliberate 
 // then UPDATE status='processing', attempts = attempts + 1, started_at = now()
 ```
 
-`SKIP LOCKED` lets multiple workers coexist without ever fighting over a row, and a job stuck in `processing` for more than 10 minutes becomes claimable again — crash recovery without a supervisor.
+`SKIP LOCKED` lets multiple workers coexist without ever fighting over a row, and a job stuck in `processing` for more than 10 minutes becomes claimable again, which gives crash recovery without a supervisor.
 
-The worker loop itself is deliberately boring:
+The worker loop itself is boring on purpose:
 
 ```go
 func (w *Worker) Run(ctx context.Context, pollInterval time.Duration) {
@@ -56,7 +56,7 @@ func (w *Worker) Run(ctx context.Context, pollInterval time.Duration) {
 }
 ```
 
-There is also a `ProcessJobByID` entry point, so the same worker code runs in a queue-triggered deployment (SQS → Lambda) without modification — the polling loop is just one of two drivers.
+There is also a `ProcessJobByID` entry point, so the same worker code runs in a queue-triggered deployment (SQS → Lambda) without modification; the polling loop is just one of two drivers.
 
 ## The reply token as a perishable resource
 
@@ -84,7 +84,7 @@ func (w *Worker) replyWithToken(ctx context.Context, job Job, text string) error
 }
 ```
 
-55 seconds is a safety margin under LINE's ~60-second token lifetime. Note what happens on expiry: the outcome is *recorded* (`reply_status = expired`) rather than swallowed. The diet log still gets written — the user's data is never held hostage by a messaging deadline — and the reply ledger makes "user never got an answer" a queryable condition instead of a mystery.
+55 seconds is a safety margin under LINE's ~60-second token lifetime. Note what happens on expiry: the outcome is *recorded* (`reply_status = expired`) rather than swallowed. The diet log still gets written, so a messaging deadline never costs the user their data, and the reply ledger makes "user never got an answer" a queryable condition instead of a mystery.
 
 ## Trade-offs I accepted
 
