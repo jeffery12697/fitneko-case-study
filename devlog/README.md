@@ -18,6 +18,8 @@ Five entries where the hindsight section earned its keep:
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-09 | [Food battles: opinions about food, never about the people eating it](2026-09-food-battles.md) | Food battles (per-food stance layer, seasonal windows, same-day dedupe) |
+| 2026-09 | [Measuring the funnel before there was anything to measure](2026-09-launch-funnel-measurement.md) | Launch instrumentation (activation funnel in the digest, cookieless site analytics, day-2 push experiment) |
 | 2026-09 | [Phase 18c: three cats, one arbiter, and an eval that had to learn what production actually says](2026-09-phase-18c-persona.md) | Phase 18c (persona gears, quiet mode, LLM tone candidates, tone eval) |
 | 2026-09 | [Invite milestones: a ladder built on the constraint that already existed](2026-09-invite-milestones.md) | Invite milestones (5/10/30 stickers, next-target progress) |
 | 2026-09 | [Six curated programs, zero backend](2026-09-plan-templates.md) | Curated training programs (bundle-resident templates, one-tap apply) |

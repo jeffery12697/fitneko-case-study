@@ -26,22 +26,25 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 ## What it does
 
 **Log by talking.**
-- Free-form zh-TW / English / mixed text becomes structured calorie + macro logs.
-- Send a photo and the bot asks what it's for — meal, nutrition label, or menu — before spending anything.
-- Voice notes feed the same parser; corrections are plain language — 「把早餐的蛋改成兩顆」 edits the entry it names.
+- Free-form zh-TW, English or mixed text becomes a structured calorie + macro log.
+- Photos are routed by intent — meal, nutrition label or menu — asked once, before anything is spent.
+- Voice notes feed the same parser. Corrections are plain language: 「把早餐的蛋改成兩顆」 edits the entry it names.
 
 **Know the food.**
-- A 3,200+ item Taiwan food catalog — government nutrition data plus major chains' official figures — where an exact hit always beats an LLM guess.
-- Hand-shaken drinks costed deterministically from eight chains' official figures: brand × base × sugar × toppings × cup size.
-- Known and saved foods resolve with **zero LLM tokens**; the model only sees genuinely new input.
+- A 3,200+ item Taiwan catalog from government nutrition data and chains' official figures. An exact hit always beats an LLM guess.
+- Hand-shaken drinks are costed deterministically across eight chains: brand × base × sugar × toppings × cup size.
+- Known and saved foods resolve with **zero LLM tokens**. The model only sees genuinely new input.
 
 **Coach, not just count.**
-- TDEE-assisted goals, MET-based workout logging, guided strength sessions (`10x70` logs a set), and six curated training programs applied in one tap.
-- A cat coach that remembers your targets and recent conversation — one-liners after the numbers, never instead of them.
-- Pick the cat: gentle, coach, or tsundere — switched in chat (「兇一點」) or in settings — plus a numbers-only quiet mode. Hand-written lines and LLM-proposed ones pass through one arbiter with the same rules; a weigh-in or a bad day always gets encouragement, whatever the gear.
-- Daily "what should I eat?" from the *remaining* budget; a weekly report card of stats + LLM commentary.
-- Streaks pay out credits; a broken streak is repairable with credits — visibly marked, never counted by achievements.
-- Inviting a friend rewards both sides, capped monthly so a leaked code isn't worth farming; milestone stickers at 3, 5, 10 and 30 friends keep the loop going past the cap.
+- TDEE-assisted goals, MET-based workouts, guided strength sessions (`10x70` logs a set), six curated programs in one tap.
+- Daily "what should I eat?" from the *remaining* budget; a weekly report card of stats plus LLM commentary.
+- Streaks pay out credits. A broken streak is repairable with credits — visibly marked, never counted by achievements.
+- Invites reward both sides, capped monthly so a leaked code isn't worth farming; milestone stickers keep the loop alive past the cap.
+
+**A cat, not a narrator.**
+- Pick the voice — gentle, coach or tsundere — in chat (「兇一點」) or in settings, or switch it off for numbers only.
+- It remembers your targets and the last few turns, and holds fixed opinions on Taiwan's food arguments: team southern zongzi, pro-pearls, anti-coriander.
+- Hand-written lines and model-proposed ones leave through one arbiter under one rule set. A weigh-in or a bad day gets encouragement, whatever the gear.
 
 <details>
 <summary><strong>Built like a product</strong> — payments, abuse limits, consent, deletion, one-person operations (expand)</summary>
@@ -69,30 +72,29 @@ Three rules recur in almost every decision below; the deep dives are mostly thes
 %%{init: {"themeVariables": {"fontSize": "18px"}}}%%
 flowchart TD
     LINE[LINE message<br/>text · photo · voice] --> GATE[Gates<br/>auth · abuse · consent]
+    GATE -. photo .-> ASK["What is this photo?<br/>meal · label · menu"] -. one tap .-> IN
     GATE --> IN[Async intake<br/>ack in ms → queue → worker]
-    GATE -. photo .-> ASK["Ask what the photo is for<br/>meal · label · menu"]
-    ASK -- "one tap" --> IN
     IN --> RP
 
-    subgraph FUNNEL [Parsing funnel — cheapest layer wins]
+    subgraph FUNNEL [Parsing funnel]
         direction TB
         RP["1 · intent rules"] -- miss --> KF["2 · known foods<br/>0 tokens"] -- miss --> LLM["3 · LLM parser"]
     end
 
     FUNNEL --> SVC[Diet service]
-    SVC --> PG[(PostgreSQL<br/>logs · snapshots · food catalog)]
-    SVC --> TONE["Tone engine<br/>numbers first · one persona line after"]
+    SVC --> PG[(PostgreSQL)]
+    SVC --> TONE["Tone engine<br/>numbers first, cat line after"]
     TONE --> REPLY[LINE reply / push]
-    REPLY -. cards deep-link .-> LIFF[MINI app<br/>React, inside LINE]
-    LIFF -- REST reads --> PG
-    LIFF -- "logs re-enter the funnel" --> SVC
+    REPLY -. deep-link .-> LIFF[MINI app<br/>React, inside LINE]
+    LIFF --> PG
+    LIFF --> SVC
 ```
 
-<sub>Whichever layer resolves first wins — only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog already knows. The tone engine is the single door every reply's personality passes through: a hand-written pool for the free paths, an LLM-proposed candidate when the parser ran, one set of safety rules for both. Full detail in the [deep dives](#deep-dives).</sub>
+<sub>Only genuinely new input reaches the LLM. The free-tier quota check sits *between* layers 2 and 3, so an over-quota user still logs anything the catalog knows. Every reply's personality leaves through the tone engine — hand-written or model-proposed, same rules. Detail in the [deep dives](#deep-dives).</sub>
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~43.1k LOC application Go · ~21.8k LOC TypeScript/React · ~63.3k LOC Go tests (271 files) · 65 migrations · 1,487 commits
+**Scale:** ~44.8k LOC application Go · ~22.4k LOC TypeScript/React · ~66.9k LOC Go tests (284 files) · 69 migrations · 1,689 commits
 
 ## Deep dives
 
@@ -103,7 +105,7 @@ The interesting engineering lives in eleven decisions:
 | # | Deep dive | The one-line takeaway |
 |---|-----------|----------------------|
 | 1 | [Async intake: acknowledge fast, reply later](deep-dives/01-async-intake-pipeline.md) | LINE webhooks can't wait for an LLM — enqueue, return 200, treat the reply token as perishable. |
-| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | 12 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
+| 2 | [Deterministic parsing before the LLM](deep-dives/02-deterministic-parsing-before-llm.md) | 13 ordered rules resolve sure-fire intents with zero latency, zero cost, zero hallucination. |
 | 3 | [One interface, two LLM providers](deep-dives/03-llm-provider-abstraction.md) | OpenAI and Anthropic force structure differently; unifying them shaped the parsing layer. |
 | 4 | [Clarification flows: when the bot asks back](deep-dives/04-clarification-flows.md) | Multi-turn state in a stateless webhook world, TTL-bounded and gracefully degrading. |
 | 5 | [Testing across a migration you haven't done yet](deep-dives/05-migration-proof-e2e.md) | One e2e suite ran unchanged before and after the serverless migration — guarding it, not rewritten by it. |
@@ -116,15 +118,13 @@ The interesting engineering lives in eleven decisions:
 
 ## Engineering practices
 
-- **Spec-first phases** — every phase starts from a written spec with numbered requirements and explicit error cases (~27 phases so far).
-- **A written plan, then a review per task, then a review of the whole branch** — each phase's spec becomes a task-by-task plan with the tests written first; every task is reviewed against its brief before the next starts, and the finished branch is reviewed against the spec. The two layers catch different things — see the plan that [quietly shrank its spec](devlog/2026-07-phase-18b-tone-layer.md), the [stale comments a scoped review found](devlog/2026-09-invite-milestones.md), and the [eval that judged the wrong line](devlog/2026-09-phase-18c-persona.md).
-- **TDD against behavior** — tests assert on replies sent and rows written, never internals; the one-command e2e harness survived the serverless migration unchanged.
-- **CI on every push** — Go + web suites, e2e, Lambda smoke builds, terraform validate, a backup-restore proof; ~3 minutes, zero real credentials.
-- **Checks the tests can't do** — lint, call-path vulnerability scanning and workflow linting gate every merge; dependency updates land weekly, security fixes immediately.
-- **CD with zero stored keys** — every merge auto-deploys dev via GitHub OIDC, pinned to the commit CI passed; prod is a deliberate plan-then-apply.
-- **Migrations as code** — versioned up/down SQL pairs, applied idempotently by the pipeline.
+- **Spec first, always** — numbered requirements and explicit error cases before any code. ~100 specs so far, each with a matching task-by-task plan.
+- **A review per task, then a review of the whole branch** — tests are written first, every task is reviewed against its brief before the next starts, and the finished branch is reviewed against the spec. The two layers catch different things: the plan that [quietly shrank its spec](devlog/2026-07-phase-18b-tone-layer.md), the [stale comments a scoped review found](devlog/2026-09-invite-milestones.md), the [eval that judged the wrong line](devlog/2026-09-phase-18c-persona.md).
+- **TDD against behavior** — tests assert on replies sent and rows written, never internals. The one-command e2e harness survived the serverless migration unchanged.
+- **Everything gates the merge** — Go + web suites, e2e, Lambda smoke builds, `terraform validate`, a backup-restore proof, plus lint, call-path vulnerability scanning and workflow linting. ~3 minutes, zero real credentials.
+- **CD with zero stored keys** — every merge auto-deploys dev via GitHub OIDC, pinned to the commit CI passed; prod is a deliberate plan-then-apply. Migrations are versioned up/down pairs applied by the pipeline.
 - **Graceful degradation by default** — LLM retries with backoff, clarification failures re-prompt, unreadable images never fabricate a log.
-- **Model output is eval-gated, not eyeballed** — a live eval runs mine-field scenarios across every persona and judges the line the user would actually see; body, region and brand violations fail the build, softer categories go to human review.
+- **Model output is eval-gated, not eyeballed** — a live eval runs mine-field scenarios across every persona and judges the line the user would actually see; body, region and brand violations fail the build.
 
 ## Devlog
 

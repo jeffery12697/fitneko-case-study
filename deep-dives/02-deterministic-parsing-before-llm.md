@@ -12,7 +12,7 @@ The design question isn't "rules or LLM" — it's **where exactly the line sits*
 
 ## The pipeline
 
-Eleven rules run in a fixed order. Each rule sees a normalized view of the input and either claims it or passes:
+Thirteen rules run in a fixed order. Each rule sees a normalized view of the input and either claims it or passes:
 
 ```go
 type Rule interface {
@@ -28,8 +28,9 @@ type NormalizedInput struct {
 ```
 
 ```
-Help → PersonalFood → AssistedGoal → Goal → Preference → Summary
-     → Confirm → Delete → Correction → RecordWeight → FoodLog
+Help → Greeting → PersonalFood → AssistedGoal → Strength → Delete
+     → Correction → RecordWeight → Workout → AskRecommendation
+     → AskWeeklyReport → Summary → FoodLog
      → (no match) → LLM fallback
 ```
 
@@ -68,7 +69,7 @@ A concrete lesson baked into this pipeline: an earlier version let a bare `設�
 
 ## The payoff, measured in tests
 
-Each rule is a pure function of `NormalizedInput`, so the test suite covers the entire intent surface with table-driven unit tests — no DB, no network, no flakiness. The parser packages carry the densest test coverage in the codebase (~20 of the 40 test files), which is exactly where you want it: this layer decides whether the bot *deletes a user's data* or *logs a meal*.
+Each rule is a pure function of `NormalizedInput`, so the test suite covers the entire intent surface with table-driven unit tests — no DB, no network, no flakiness. The parser packages carry the densest table-driven coverage in the codebase, which is exactly where you want it: this layer decides whether the bot *deletes a user's data* or *logs a meal*.
 
 ## Trade-offs I accepted
 
