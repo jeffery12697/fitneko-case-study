@@ -18,6 +18,8 @@ Five entries where the hindsight section earned its keep:
 
 | Date | Entry | Phase |
 |------|-------|-------|
+| 2026-09 | [Swapping the model before the deprecation date, one path at a time](2026-09-model-migration.md) | Model migration (text on GPT-6 Luna, photos on GPT-5.6 Luna, per-path evals) |
+| 2026-09 | [Latency: fifty round trips to a database in another country](2026-09-latency-region-move.md) | Latency (stage timing, Lambdas moved to the database's region, worker memory) |
 | 2026-09 | [Food battles: opinions about food, never about the people eating it](2026-09-food-battles.md) | Food battles (per-food stance layer, seasonal windows, same-day dedupe) |
 | 2026-09 | [Measuring the funnel before there was anything to measure](2026-09-launch-funnel-measurement.md) | Launch instrumentation (activation funnel in the digest, cookieless site analytics, day-2 push experiment) |
 | 2026-09 | [Phase 18c: three cats, one arbiter, and an eval that had to learn what production actually says](2026-09-phase-18c-persona.md) | Phase 18c (persona gears, quiet mode, LLM tone candidates, tone eval) |

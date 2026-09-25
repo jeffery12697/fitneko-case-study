@@ -33,7 +33,7 @@ Bot:  已記錄 🍙 鮭魚御飯團 ×1 (220 kcal) ☕ 大杯拿鐵 ×1 (180 kc
 **Know the food.**
 - A 3,200+ item Taiwan catalog from government nutrition data and chains' official figures. An exact hit always beats an LLM guess.
 - The calories in a hand-shaken drink come from a formula over brand × base × sugar × toppings × cup size, covering eight chains.
-- Known and saved foods resolve with zero LLM tokens. The model only sees input nothing else recognized.
+- Known foods, saved foods and branded drink orders resolve with zero LLM tokens. The model only sees input nothing else recognized.
 
 **Coach on top of the numbers.**
 - TDEE-assisted goals, MET-based workouts, guided strength sessions (`10x70` logs a set), six curated programs in one tap.
@@ -78,7 +78,7 @@ flowchart TD
 
     subgraph FUNNEL [Parsing funnel]
         direction TB
-        RP["1 · intent rules"] -- miss --> KF["2 · known foods<br/>0 tokens"] -- miss --> LLM["3 · LLM parser"]
+        RP["1 · intent rules"] -- miss --> KF["2 · known foods + drinks<br/>0 tokens"] -- miss --> LLM["3 · LLM parser"]
     end
 
     FUNNEL --> SVC[Diet service]
@@ -94,7 +94,7 @@ flowchart TD
 
 **Stack:** Go · PostgreSQL / Neon · LINE Messaging API + LIFF · React + TypeScript + Vite · OpenAI + Anthropic APIs · AWS Lambda + SQS + API Gateway + CloudFront / Route 53 (Terraform) · DynamoDB · GitHub Actions CI/CD (OIDC, zero stored keys) · Playwright
 
-**Scale:** ~44.8k LOC application Go · ~22.4k LOC TypeScript/React · ~66.9k LOC Go tests (284 files) · 69 migrations · 1,689 commits
+**Scale:** ~45.7k LOC application Go · ~23.1k LOC TypeScript/React · ~68.6k LOC Go tests (295 files) · 69 migrations · 1,832 commits
 
 ## Deep dives
 
